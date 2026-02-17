@@ -5,41 +5,61 @@ on:
   pull_request:
 
 jobs:
-  gateway:
+  secret-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Scan for common secret patterns
+        run: |
+          if rg -n --hidden -g'!.git' -e 'GITHUB_TOKEN=' -e 'ghp_[A-Za-z0-9]+' -e 'github_pat_[A-Za-z0-9_]+' -e '-----BEGIN (RSA|EC|OPENSSH) PRIVATE KEY-----' .; then
+            echo "Potential secret pattern detected"
+            exit 1
+          fi
+
+  gateway-tests:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Install dependencies
+      - name: Install gateway dependencies
         run: |
           cd gateway
           pip install -r requirements-dev.txt
-      - name: Run tests
+      - name: Run gateway tests
         run: |
           cd gateway
-          pytest
+          pytest -q
 
-  ui:
+  ui-tests:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - name: Install dependencies
+      - name: Install UI dependencies
         run: |
           cd ui
           npm ci
-      - name: Run tests
+      - name: Run UI tests
         run: |
           cd ui
-          npm test
+          npm test --silent
 
-  docker-smoke:
+  lint-roadmap:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Validate compose
+      - name: Lint plan
+        run: |
+          echo "TODO: standardize linting with ruff (gateway) and eslint (ui/sdk) in next infra pass."
+          echo "Current CI keeps test + secret gates mandatory."
+
+  compose-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate docker compose
         run: docker compose config
