@@ -1,5 +1,6 @@
 import json
 import os
+import time
 
 import httpx
 
@@ -44,6 +45,17 @@ def classify(issue: dict, template: dict) -> tuple[str, str]:
     )
 
 
+def read_issues_with_retry(repo: str, attempts: int = 6, delay_seconds: float = 1.0) -> dict:
+    last = {}
+    for _ in range(attempts):
+        response = tool_call("issues.list", repo, {"state": "open"})
+        last = response
+        if response.get("status") == "executed":
+            return response
+        time.sleep(delay_seconds)
+    return last
+
+
 def main() -> None:
     print("== Agent2Allow Demo: GitHub Triage Agent ==")
     template = load_template(TRIAGE_TEMPLATE_PATH)
@@ -57,9 +69,12 @@ def main() -> None:
 
     print("1) Deny-by-default check:", denied["status"], "-", denied["message"])
 
-    read = tool_call("issues.list", REPO, {"state": "open"})
+    read = read_issues_with_retry(REPO)
     print("2) Read call:", read["status"])
-    issues = read.get("result", {}).get("issues", [])
+    if read["status"] != "executed":
+        print("Read call did not execute. Message:", read.get("message", "unknown"))
+        raise SystemExit(1)
+    issues = (read.get("result") or {}).get("issues", [])
     print(f"   Found {len(issues)} issues")
 
     planned_writes = 0
