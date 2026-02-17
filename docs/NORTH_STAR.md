@@ -39,3 +39,7 @@
 ## Iteration Selection (2026-02-17, iteration 3)
 - Quick Win: #3 SDK copy-paste snippets with approval flow examples.
 - Moat Builder: #6 Idempotency keys for `/v1/tool-calls`.
+
+## Iteration Selection (2026-02-18, iteration 4)
+- Quick Win: #4 One-command local dev check helper script.
+- Moat Builder: #8 Policy schema validation command and CI integration.

@@ -200,3 +200,37 @@ Make write-path tool calls safe to retry from clients and improve SDK onboarding
 
 ### Rollback plan
 - Remove idempotency table and header handling; keep endpoint behavior unchanged.
+
+---
+
+## Iteration 4 (2026-02-18): Dev Helper + Policy Validation Guardrail
+
+### Goal
+Reduce local setup friction and prevent invalid policy files from reaching runtime.
+
+### Scope
+- Quick Win: add a root script that runs core checks in a stable order.
+- Moat Builder: add policy validation CLI with strict checks and tests.
+
+### Non-goals
+- No full policy compiler.
+- No policy migration/versioning system.
+
+### Files to change
+- `scripts/dev_check.sh`
+- `gateway/scripts/validate_policy.py`
+- `gateway/tests/test_policy_validate.py`
+- `.github/workflows/ci.yml`
+- `docs/quickstart.md`
+- `docs/concepts/policies.md`
+- `docs/TEST_REPORTS/2026-02-18-iteration4.md`
+- `docs/PR_DRAFTS/2026-02-18-iteration4.md`
+
+### Risks and mitigations
+- Risk: overly strict validation blocks existing policy variants.
+  - Mitigation: start with clear MVP schema and explicit error messages.
+- Risk: local script drift from CI.
+  - Mitigation: keep command set aligned with CI checks.
+
+### Rollback plan
+- Remove validator script from CI and keep runtime parser behavior unchanged.
