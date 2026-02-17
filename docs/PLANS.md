@@ -165,3 +165,38 @@ Reduce transient GitHub connector failures and improve operator self-service for
 
 ### Rollback plan
 - Revert connector retry helper and restore direct request behavior.
+
+---
+
+## Iteration 3 (2026-02-17): Idempotency Keys + SDK Approval Snippets
+
+### Goal
+Make write-path tool calls safe to retry from clients and improve SDK onboarding for approval-aware usage.
+
+### Scope
+- Quick Win: add copy-paste JS/Python SDK snippets that show denied/pending-approved flows.
+- Moat Builder: add optional idempotency key support for `/v1/tool-calls` with response replay.
+
+### Non-goals
+- No distributed cache or cross-instance idempotency store.
+- No API version bump.
+
+### Files to change
+- `gateway/src/schemas.py`
+- `gateway/src/db.py`
+- `gateway/src/main.py`
+- `gateway/tests/test_gateway.py`
+- `sdk/js/README.md`
+- `sdk/python/README.md`
+- `docs/quickstart.md`
+- `docs/TEST_REPORTS/2026-02-17-iteration3.md`
+- `docs/PR_DRAFTS/2026-02-17-iteration3.md`
+
+### Risks and mitigations
+- Risk: replaying stale errors could confuse users.
+  - Mitigation: replay exact stored result with explicit `idempotent_replay=true` metadata.
+- Risk: key collision across different request payloads.
+  - Mitigation: bind key to request fingerprint and reject conflicts.
+
+### Rollback plan
+- Remove idempotency table and header handling; keep endpoint behavior unchanged.

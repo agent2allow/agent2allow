@@ -35,3 +35,7 @@
 ## Iteration Selection (2026-02-17, iteration 2)
 - Quick Win: #10 Add denied-call troubleshooting guide.
 - Moat Builder: #5 Retry/backoff in GitHub connector.
+
+## Iteration Selection (2026-02-17, iteration 3)
+- Quick Win: #3 SDK copy-paste snippets with approval flow examples.
+- Moat Builder: #6 Idempotency keys for `/v1/tool-calls`.
