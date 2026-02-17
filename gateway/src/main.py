@@ -1,8 +1,10 @@
 import json
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
 
+from .connectors.github_client import GithubClient
 from .db import SessionLocal, engine
 from .models import Base
 from .policy import PolicyEngine
@@ -15,15 +17,11 @@ from .schemas import (
 )
 from .service import Agent2AllowService
 from .settings import settings
-from .connectors.github_client import GithubClient
-
-
-app = FastAPI(title="Agent2Allow", version="0.1.0")
 
 
 def build_service() -> Agent2AllowService:
     policy_path = Path(settings.policy_path)
-    if not policy_path.exists() and Path("gateway") .exists():
+    if not policy_path.exists() and Path("gateway").exists():
         policy_path = Path("gateway") / settings.policy_path
 
     return Agent2AllowService(
@@ -33,10 +31,14 @@ def build_service() -> Agent2AllowService:
     )
 
 
-@app.on_event("startup")
-def startup() -> None:
+@asynccontextmanager
+async def lifespan(_: FastAPI):
     Base.metadata.create_all(bind=engine)
     app.state.service = build_service()
+    yield
+
+
+app = FastAPI(title="Agent2Allow", version="0.1.0", lifespan=lifespan)
 
 
 @app.get("/health")

@@ -48,14 +48,26 @@ jobs:
           cd ui
           npm test --silent
 
-  lint-roadmap:
+  lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - name: Lint plan
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Run gateway lint
         run: |
-          echo "TODO: standardize linting with ruff (gateway) and eslint (ui/sdk) in next infra pass."
-          echo "Current CI keeps test + secret gates mandatory."
+          cd gateway
+          pip install -r requirements-dev.txt
+          ruff check src tests
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+      - name: Run UI lint
+        run: |
+          cd ui
+          npm ci
+          npm run lint
 
   compose-smoke:
     runs-on: ubuntu-latest

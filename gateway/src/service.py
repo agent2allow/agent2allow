@@ -1,6 +1,6 @@
 import json
-from datetime import datetime
-from typing import Callable
+from collections.abc import Callable
+from datetime import UTC, datetime
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -38,7 +38,7 @@ class Agent2AllowService:
         message: str = "",
     ) -> None:
         entry = AuditLog(
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             agent_id=agent_id,
             tool=tool,
             action=action,
@@ -73,8 +73,12 @@ class Agent2AllowService:
 
         raise ValueError("unsupported action")
 
-    def handle_tool_call(self, request: ToolCallRequest) -> tuple[str, str, dict | None, int | None]:
-        decision: PolicyDecision = self.policy_engine.decide(request.tool, request.action, request.repo)
+    def handle_tool_call(
+        self, request: ToolCallRequest
+    ) -> tuple[str, str, dict | None, int | None]:
+        decision: PolicyDecision = self.policy_engine.decide(
+            request.tool, request.action, request.repo
+        )
 
         with self.session_factory() as db:
             request_payload = request.model_dump()
@@ -153,7 +157,11 @@ class Agent2AllowService:
 
     def list_pending_approvals(self) -> list[Approval]:
         with self.session_factory() as db:
-            rows = db.scalars(select(Approval).where(Approval.status == "pending").order_by(Approval.created_at.asc())).all()
+            rows = db.scalars(
+                select(Approval)
+                .where(Approval.status == "pending")
+                .order_by(Approval.created_at.asc())
+            ).all()
             return rows
 
     def approve(self, approval_id: int, approver: str, reason: str) -> tuple[str, dict | None]:
