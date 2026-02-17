@@ -1,0 +1,14 @@
+version: 1
+defaults:
+  deny_by_default: true
+rules:
+  - tool: github
+    actions: [issues.list]
+    repo: acme/roadrunner
+    risk: read
+    allow: true
+  - tool: github
+    actions: [issues.set_labels, issues.create_comment]
+    repo: acme/roadrunner
+    risk: medium
+    allow: true

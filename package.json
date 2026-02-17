@@ -1,0 +1,8 @@
+{
+  "name": "agent2allow",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "demo": "python3 examples/github-triage-agent/triage.py"
+  }
+}

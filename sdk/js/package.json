@@ -1,0 +1,6 @@
+{
+  "name": "@agent2allow/sdk-js",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "client.js"
+}

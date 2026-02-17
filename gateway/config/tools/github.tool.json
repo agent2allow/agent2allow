@@ -1,0 +1,11 @@
+{
+  "tool": "github",
+  "actions": {
+    "issues.list": { "risk": "read", "description": "List repository issues" },
+    "issues.set_labels": { "risk": "medium", "description": "Add labels to an issue" },
+    "issues.create_comment": { "risk": "medium", "description": "Create issue comment" }
+  },
+  "scope": {
+    "repo": true
+  }
+}

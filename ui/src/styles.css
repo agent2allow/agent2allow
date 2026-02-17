@@ -1,0 +1,89 @@
+:root {
+  color-scheme: light;
+  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+  background: linear-gradient(180deg, #f9f8f4, #f1ede4);
+  color: #1f1f1f;
+}
+
+body {
+  margin: 0;
+}
+
+.page {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+h1 {
+  font-size: 1.8rem;
+  margin-bottom: 1rem;
+}
+
+section {
+  background: #fffdf8;
+  border: 1px solid #d8d3c5;
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.card-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.card {
+  border: 1px solid #d8d3c5;
+  border-radius: 10px;
+  padding: 0.75rem;
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+button {
+  border: 1px solid #2b5f47;
+  background: #2b5f47;
+  color: white;
+  border-radius: 6px;
+  padding: 0.35rem 0.65rem;
+  cursor: pointer;
+}
+
+button.deny {
+  border-color: #8d2a2a;
+  background: #8d2a2a;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  border-bottom: 1px solid #e2ddd0;
+  padding: 0.4rem;
+  text-align: left;
+  font-size: 0.92rem;
+}
+
+.error {
+  color: #8d2a2a;
+}

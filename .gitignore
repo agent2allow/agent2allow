@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.venv/
+node_modules/
+ui/node_modules/
+dist/
+ui/dist/
+*.log
+.env
+.DS_Store
+.gateway_data/
+gateway/data/
