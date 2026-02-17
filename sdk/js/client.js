@@ -3,10 +3,14 @@ export class Agent2AllowClient {
     this.baseUrl = baseUrl.replace(/\/$/, "");
   }
 
-  async toolCall(payload) {
+  async toolCall(payload, options = {}) {
+    const headers = { "Content-Type": "application/json" };
+    if (options.idempotencyKey) {
+      headers["X-Idempotency-Key"] = options.idempotencyKey;
+    }
     const response = await fetch(`${this.baseUrl}/v1/tool-calls`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify(payload)
     });
     return response.json();

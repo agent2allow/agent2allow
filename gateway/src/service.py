@@ -1,14 +1,20 @@
 import json
 from collections.abc import Callable
 from datetime import UTC, datetime
+from hashlib import sha256
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from .connectors.github_client import GithubClient
-from .models import Approval, AuditLog
+from .models import Approval, AuditLog, IdempotencyRecord
 from .policy import PolicyDecision, PolicyEngine
 from .schemas import ToolCallRequest
+
+
+class IdempotencyConflictError(ValueError):
+    pass
 
 
 class Agent2AllowService:
@@ -73,15 +79,79 @@ class Agent2AllowService:
 
         raise ValueError("unsupported action")
 
+    def _request_hash(self, request: ToolCallRequest) -> str:
+        payload = request.model_dump()
+        payload.pop("idempotency_key", None)
+        serialized = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+        return sha256(serialized.encode("utf-8")).hexdigest()
+
+    def _record_idempotency(
+        self,
+        db: Session,
+        *,
+        key: str,
+        request_hash: str,
+        response_payload: dict,
+    ) -> None:
+        row = IdempotencyRecord(
+            key=key,
+            request_hash=request_hash,
+            response_payload=json.dumps(response_payload),
+        )
+        db.add(row)
+        try:
+            db.commit()
+        except IntegrityError:
+            db.rollback()
+            existing = db.scalar(select(IdempotencyRecord).where(IdempotencyRecord.key == key))
+            if existing and existing.request_hash != request_hash:
+                raise IdempotencyConflictError(
+                    "idempotency key already used with a different request payload"
+                ) from None
+            if not existing:
+                raise
+
     def handle_tool_call(
         self, request: ToolCallRequest
-    ) -> tuple[str, str, dict | None, int | None]:
+    ) -> tuple[str, str, dict | None, int | None, bool]:
+        request_hash = self._request_hash(request)
         decision: PolicyDecision = self.policy_engine.decide(
             request.tool, request.action, request.repo
         )
 
         with self.session_factory() as db:
             request_payload = request.model_dump()
+            idempotency_key = request.idempotency_key
+
+            if idempotency_key:
+                record = db.scalar(
+                    select(IdempotencyRecord).where(IdempotencyRecord.key == idempotency_key)
+                )
+                if record:
+                    if record.request_hash != request_hash:
+                        raise IdempotencyConflictError(
+                            "idempotency key already used with a different request payload"
+                        )
+                    cached = json.loads(record.response_payload)
+                    self._audit(
+                        db,
+                        agent_id=request.agent_id,
+                        tool=request.tool,
+                        action=request.action,
+                        repo=request.repo,
+                        risk_level=decision.risk_level,
+                        status="idempotent_replay",
+                        request_payload=request_payload,
+                        response_payload={"cached_status": cached["status"]},
+                        message=f"replayed response for key {idempotency_key}",
+                    )
+                    return (
+                        cached["status"],
+                        cached["message"],
+                        cached.get("result"),
+                        cached.get("approval_id"),
+                        True,
+                    )
 
             if not decision.allowed:
                 self._audit(
@@ -95,7 +165,19 @@ class Agent2AllowService:
                     request_payload=request_payload,
                     message=decision.message,
                 )
-                return "denied", decision.message, None, None
+                if idempotency_key:
+                    self._record_idempotency(
+                        db,
+                        key=idempotency_key,
+                        request_hash=request_hash,
+                        response_payload={
+                            "status": "denied",
+                            "message": decision.message,
+                            "result": None,
+                            "approval_id": None,
+                        },
+                    )
+                return "denied", decision.message, None, None, False
 
             if decision.approval_required:
                 approval = Approval(
@@ -124,7 +206,19 @@ class Agent2AllowService:
                     approval_id=approval.id,
                     message="approval required",
                 )
-                return "pending_approval", "approval required", None, approval.id
+                if idempotency_key:
+                    self._record_idempotency(
+                        db,
+                        key=idempotency_key,
+                        request_hash=request_hash,
+                        response_payload={
+                            "status": "pending_approval",
+                            "message": "approval required",
+                            "result": None,
+                            "approval_id": approval.id,
+                        },
+                    )
+                return "pending_approval", "approval required", None, approval.id, False
 
             try:
                 result = self._execute(request)
@@ -140,7 +234,19 @@ class Agent2AllowService:
                     response_payload=result,
                     message="executed",
                 )
-                return "executed", "executed", result, None
+                if idempotency_key:
+                    self._record_idempotency(
+                        db,
+                        key=idempotency_key,
+                        request_hash=request_hash,
+                        response_payload={
+                            "status": "executed",
+                            "message": "executed",
+                            "result": result,
+                            "approval_id": None,
+                        },
+                    )
+                return "executed", "executed", result, None, False
             except Exception as exc:  # pragma: no cover
                 self._audit(
                     db,
@@ -153,7 +259,19 @@ class Agent2AllowService:
                     request_payload=request_payload,
                     message=str(exc),
                 )
-                return "error", str(exc), None, None
+                if idempotency_key:
+                    self._record_idempotency(
+                        db,
+                        key=idempotency_key,
+                        request_hash=request_hash,
+                        response_payload={
+                            "status": "error",
+                            "message": str(exc),
+                            "result": None,
+                            "approval_id": None,
+                        },
+                    )
+                return "error", str(exc), None, None, False
 
     def list_pending_approvals(self) -> list[Approval]:
         with self.session_factory() as db:
