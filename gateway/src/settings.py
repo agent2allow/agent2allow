@@ -8,6 +8,8 @@ class Settings(BaseSettings):
     policy_path: str = "config/default-policy.yml"
     github_base_url: str = "http://mock-github:8081"
     github_token: str | None = None
+    github_retry_attempts: int = 3
+    github_retry_backoff_ms: int = 200
 
 
 settings = Settings()
