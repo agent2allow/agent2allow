@@ -4,7 +4,6 @@ from pathlib import Path
 
 import yaml
 
-
 RISK_LEVELS_REQUIRING_APPROVAL = {"medium", "high"}
 
 

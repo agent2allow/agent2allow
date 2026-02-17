@@ -5,7 +5,6 @@ from sqlalchemy.orm import sessionmaker
 
 from .settings import settings
 
-
 if settings.database_url.startswith("sqlite:///"):
     db_path = settings.database_url.replace("sqlite:///", "", 1)
     if db_path.startswith("./"):
