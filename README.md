@@ -5,10 +5,22 @@ Agent2Allow — Ship AI agents safely to production in 10 minutes — with deny-
 Agent2Allow is an open-core tool gateway for AI agents.
 It enforces policy, routes risky actions through approvals, and records auditable tool calls.
 
-## Quickstart (placeholder)
+## 10-Minute Quickstart
 ```bash
 docker compose up --build -d
 npm run demo
+```
+
+Expected demo flow:
+- deny-by-default blocks an unscoped repo call
+- issue listing executes immediately
+- write actions become pending approvals
+- approvals execute queued actions
+- audit log records all transitions
+
+Smoke test script:
+```bash
+./scripts/smoke_mock_demo.sh
 ```
 
 ## Architecture Overview
@@ -27,6 +39,8 @@ npm run demo
 
 ## Development
 ```bash
+cd gateway && ruff check src tests
 cd gateway && pytest
+cd ui && npm run lint
 cd ui && npm test
 ```

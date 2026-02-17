@@ -9,6 +9,7 @@ Each tool call emits structured audit events:
 ## Storage
 - SQLite table: `audit_logs`
 - Export endpoint: `GET /v1/audit/export` (JSONL)
+- UI includes status/repo/action filters and per-event detail expansion for fast triage
 
 Audit rows include:
 - timestamp

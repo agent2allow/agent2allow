@@ -75,3 +75,13 @@ jobs:
       - uses: actions/checkout@v6
       - name: Validate docker compose
         run: docker compose config
+
+  demo-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+      - name: Run mock demo smoke
+        run: ./scripts/smoke_mock_demo.sh

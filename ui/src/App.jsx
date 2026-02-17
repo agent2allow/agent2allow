@@ -13,6 +13,9 @@ async function fetchJson(path, options) {
 export function App() {
   const [approvals, setApprovals] = useState([]);
   const [audit, setAudit] = useState([]);
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [query, setQuery] = useState("");
+  const [expandedAuditIds, setExpandedAuditIds] = useState([]);
   const [error, setError] = useState("");
 
   const load = async () => {
@@ -42,10 +45,54 @@ export function App() {
     await load();
   };
 
+  const exportAudit = async () => {
+    const payload = await fetchJson("/v1/audit/export");
+    const blob = new Blob([payload.lines.join("\n") + "\n"], { type: "application/x-ndjson" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = "audit-export.jsonl";
+    anchor.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const toggleExpanded = (id) => {
+    setExpandedAuditIds((prev) => {
+      if (prev.includes(id)) {
+        return prev.filter((item) => item !== id);
+      }
+      return [...prev, id];
+    });
+  };
+
+  const filteredAudit = audit.filter((entry) => {
+    const statusMatches = statusFilter === "all" || entry.status === statusFilter;
+    if (!statusMatches) {
+      return false;
+    }
+    const normalized = query.trim().toLowerCase();
+    if (!normalized) {
+      return true;
+    }
+    return (
+      entry.repo.toLowerCase().includes(normalized) ||
+      entry.action.toLowerCase().includes(normalized) ||
+      entry.agent_id.toLowerCase().includes(normalized)
+    );
+  });
+
+  const pendingCount = approvals.length;
+  const deniedCount = audit.filter((entry) => entry.status === "denied").length;
+
   return (
     <main className="page">
       <h1>Agent2Allow Control Panel</h1>
       {error && <p className="error">{error}</p>}
+      <div className="stats-row">
+        <span className="pill">Pending approvals: {pendingCount}</span>
+        <span className="pill">Audit events: {audit.length}</span>
+        <span className="pill">Denied events: {deniedCount}</span>
+      </div>
 
       <section>
         <header className="section-header">
@@ -76,7 +123,25 @@ export function App() {
       <section>
         <header className="section-header">
           <h2>Audit Log</h2>
+          <button onClick={exportAudit}>Export JSONL</button>
         </header>
+        <div className="filters">
+          <input
+            type="text"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Filter by repo/action/agent"
+          />
+          <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+            <option value="all">All statuses</option>
+            <option value="denied">denied</option>
+            <option value="pending_approval">pending_approval</option>
+            <option value="approved">approved</option>
+            <option value="denied_by_human">denied_by_human</option>
+            <option value="executed">executed</option>
+            <option value="error">error</option>
+          </select>
+        </div>
         <div className="table-wrap">
           <table>
             <thead>
@@ -86,17 +151,45 @@ export function App() {
                 <th>Action</th>
                 <th>Repo</th>
                 <th>Agent</th>
+                <th>Details</th>
               </tr>
             </thead>
             <tbody>
-              {audit.map((entry) => (
-                <tr key={entry.id}>
-                  <td>{new Date(entry.timestamp).toLocaleString()}</td>
-                  <td>{entry.status}</td>
-                  <td>{entry.action}</td>
-                  <td>{entry.repo}</td>
-                  <td>{entry.agent_id}</td>
-                </tr>
+              {filteredAudit.map((entry) => (
+                <React.Fragment key={entry.id}>
+                  <tr>
+                    <td>{new Date(entry.timestamp).toLocaleString()}</td>
+                    <td>{entry.status}</td>
+                    <td>{entry.action}</td>
+                    <td>{entry.repo}</td>
+                    <td>{entry.agent_id}</td>
+                    <td>
+                      <button onClick={() => toggleExpanded(entry.id)}>
+                        {expandedAuditIds.includes(entry.id) ? "Hide" : "Show"}
+                      </button>
+                    </td>
+                  </tr>
+                  {expandedAuditIds.includes(entry.id) && (
+                    <tr className="audit-detail-row">
+                      <td colSpan={6}>
+                        <pre>
+{JSON.stringify(
+  {
+    id: entry.id,
+    risk_level: entry.risk_level,
+    message: entry.message,
+    approval_id: entry.approval_id,
+    request_payload: entry.request_payload,
+    response_payload: entry.response_payload
+  },
+  null,
+  2
+)}
+                        </pre>
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
               ))}
             </tbody>
           </table>
