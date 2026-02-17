@@ -132,3 +132,36 @@ Improve first-run confidence and operator clarity for the hero use-case.
 
 ### Rollback plan
 - Revert smoke job and UI changes independently if instability appears.
+
+---
+
+## Iteration 2 (2026-02-17): Reliability Hardening + Denied-Call Troubleshooting
+
+### Goal
+Reduce transient GitHub connector failures and improve operator self-service for denied tool calls.
+
+### Scope
+- Quick Win: Add a concrete denied-call troubleshooting section.
+- Moat Builder: Add retry/backoff in GitHub connector with dedicated tests.
+
+### Non-goals
+- No queue architecture changes.
+- No idempotency implementation in this iteration.
+
+### Files to change
+- `gateway/src/settings.py`
+- `gateway/src/connectors/github_client.py`
+- `gateway/tests/test_github_client.py`
+- `docs/quickstart.md`
+- `docs/concepts/policies.md`
+- `docs/TEST_REPORTS/2026-02-17-iteration2.md`
+- `docs/PR_DRAFTS/2026-02-17-iteration2.md`
+
+### Risks and mitigations
+- Risk: retries could hide persistent misconfiguration.
+  - Mitigation: retry only transient statuses/network failures; preserve clear final errors.
+- Risk: increased latency under failure.
+  - Mitigation: small capped attempts and bounded backoff.
+
+### Rollback plan
+- Revert connector retry helper and restore direct request behavior.

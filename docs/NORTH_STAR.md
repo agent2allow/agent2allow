@@ -31,3 +31,7 @@
 ## Iteration Selection (2026-02-17)
 - Quick Win: #1 Deterministic smoke demo + README quickstart lift.
 - Moat Builder: #9/#11 Triage template + audit viewer improvements.
+
+## Iteration Selection (2026-02-17, iteration 2)
+- Quick Win: #10 Add denied-call troubleshooting guide.
+- Moat Builder: #5 Retry/backoff in GitHub connector.

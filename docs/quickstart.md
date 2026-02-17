@@ -35,6 +35,18 @@ Expected behavior:
 - If ports are busy, stop old containers: `docker compose down`.
 - If Node deps mismatch, run `cd ui && npm ci`.
 
+### Denied tool call (`decision=deny`)
+1. Confirm the tool call payload (`tool`, `action`, `resource.repo`) matches your policy rule.
+2. Verify policy loaded in gateway:
+   - run `docker compose logs gateway | rg -n "policy|deny|allow|approval"`
+3. Check rule scope:
+   - `tool` must be `github`
+   - `actions` must include exact action name (`issues.list`, `issues.set_labels`, `issues.create_comment`)
+   - `repo` must match `owner/name` (glob patterns allowed where configured)
+4. If action risk is `medium` or `high`, expect `pending_approval` instead of immediate execution.
+5. Open UI (`http://localhost:5173`) and approve/deny from Pending Approvals.
+6. Validate final state in audit log UI or export JSONL and inspect `decision` and `error` fields.
+
 ## Optional Real GitHub Mode
 ```bash
 export GITHUB_TOKEN=ghp_xxx

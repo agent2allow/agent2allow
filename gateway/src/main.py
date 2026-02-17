@@ -27,7 +27,12 @@ def build_service() -> Agent2AllowService:
     return Agent2AllowService(
         session_factory=SessionLocal,
         policy_engine=PolicyEngine(str(policy_path)),
-        github_client=GithubClient(settings.github_base_url, settings.github_token),
+        github_client=GithubClient(
+            settings.github_base_url,
+            settings.github_token,
+            retry_attempts=settings.github_retry_attempts,
+            retry_backoff_ms=settings.github_retry_backoff_ms,
+        ),
     )
 
 
