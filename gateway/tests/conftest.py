@@ -40,9 +40,7 @@ def client(tmp_path: Path):
     os.environ.update(env)
 
     from src.main import app
-    from src.main import startup
 
-    startup()
     with TestClient(app) as test_client:
         yield test_client
 
