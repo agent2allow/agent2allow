@@ -30,6 +30,12 @@ Expected behavior:
 ./scripts/smoke_mock_demo.sh
 ```
 
+## 5. SDK copy-paste examples
+- JavaScript: `sdk/js/README.md`
+- Python: `sdk/python/README.md`
+- For retriable agent loops, send `X-Idempotency-Key` per tool call.
+- If the same key is replayed with the same payload, response includes `idempotent_replay=true`.
+
 ## Troubleshooting
 - If demo says `Gateway not reachable`, confirm `http://localhost:8000/health`.
 - If ports are busy, stop old containers: `docker compose down`.

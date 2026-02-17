@@ -45,3 +45,13 @@ class AuditLog(Base):
     response_payload: Mapped[str] = mapped_column(Text, default="{}")
     approval_id: Mapped[int | None] = mapped_column(ForeignKey("approvals.id"), nullable=True)
     message: Mapped[str] = mapped_column(Text, default="")
+
+
+class IdempotencyRecord(Base):
+    __tablename__ = "idempotency_records"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    key: Mapped[str] = mapped_column(String(128), unique=True, index=True)
+    request_hash: Mapped[str] = mapped_column(String(64), index=True)
+    response_payload: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(UTC))

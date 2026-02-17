@@ -5,8 +5,16 @@ class Agent2AllowClient:
     def __init__(self, base_url: str = "http://localhost:8000"):
         self.base_url = base_url.rstrip("/")
 
-    def tool_call(self, payload: dict) -> dict:
-        response = httpx.post(f"{self.base_url}/v1/tool-calls", json=payload, timeout=20.0)
+    def tool_call(self, payload: dict, idempotency_key: str | None = None) -> dict:
+        headers: dict[str, str] = {}
+        if idempotency_key:
+            headers["X-Idempotency-Key"] = idempotency_key
+        response = httpx.post(
+            f"{self.base_url}/v1/tool-calls",
+            json=payload,
+            headers=headers,
+            timeout=20.0,
+        )
         response.raise_for_status()
         return response.json()
 

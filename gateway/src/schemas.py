@@ -10,6 +10,7 @@ class ToolCallRequest(BaseModel):
     action: str
     repo: str
     params: dict[str, Any] = Field(default_factory=dict)
+    idempotency_key: str | None = None
 
 
 class ToolCallResponse(BaseModel):
@@ -17,6 +18,7 @@ class ToolCallResponse(BaseModel):
     message: str
     result: dict[str, Any] | None = None
     approval_id: int | None = None
+    idempotent_replay: bool = False
 
 
 class ApprovalDecisionRequest(BaseModel):

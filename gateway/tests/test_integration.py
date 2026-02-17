@@ -81,3 +81,67 @@ def test_approve_executes_pending_action(client):
     assert "pending_approval" in statuses
     assert "approved" in statuses
     assert "executed" in statuses
+
+
+@respx.mock
+def test_tool_call_idempotency_replays_response(client):
+    route = respx.get("https://api.github.test/repos/acme/roadrunner/issues").mock(
+        return_value=Response(200, json=[{"number": 1, "title": "bug: crash", "labels": []}])
+    )
+    payload = {
+        "agent_id": "triage-agent",
+        "tool": "github",
+        "action": "issues.list",
+        "repo": "acme/roadrunner",
+        "params": {"state": "open"},
+    }
+
+    first = client.post("/v1/tool-calls", json=payload, headers={"X-Idempotency-Key": "demo-123"})
+    second = client.post("/v1/tool-calls", json=payload, headers={"X-Idempotency-Key": "demo-123"})
+
+    assert first.status_code == 200
+    assert second.status_code == 200
+    assert first.json()["status"] == "executed"
+    assert second.json()["status"] == "executed"
+    assert first.json()["idempotent_replay"] is False
+    assert second.json()["idempotent_replay"] is True
+    assert route.call_count == 1
+
+    audit = client.get("/v1/audit")
+    statuses = [row["status"] for row in audit.json()]
+    assert "idempotent_replay" in statuses
+
+
+@respx.mock
+def test_tool_call_idempotency_conflict_returns_409(client):
+    respx.get("https://api.github.test/repos/acme/roadrunner/issues").mock(
+        return_value=Response(200, json=[{"number": 1, "title": "bug: crash", "labels": []}])
+    )
+    first_payload = {
+        "agent_id": "triage-agent",
+        "tool": "github",
+        "action": "issues.list",
+        "repo": "acme/roadrunner",
+        "params": {"state": "open"},
+    }
+    second_payload = {
+        "agent_id": "triage-agent",
+        "tool": "github",
+        "action": "issues.list",
+        "repo": "acme/roadrunner",
+        "params": {"state": "closed"},
+    }
+
+    first = client.post(
+        "/v1/tool-calls",
+        json=first_payload,
+        headers={"X-Idempotency-Key": "conflict-123"},
+    )
+    conflict = client.post(
+        "/v1/tool-calls",
+        json=second_payload,
+        headers={"X-Idempotency-Key": "conflict-123"},
+    )
+
+    assert first.status_code == 200
+    assert conflict.status_code == 409

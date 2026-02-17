@@ -2,7 +2,7 @@ import json
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, Header, HTTPException
 
 from .connectors.github_client import GithubClient
 from .db import SessionLocal, engine
@@ -15,7 +15,7 @@ from .schemas import (
     ToolCallRequest,
     ToolCallResponse,
 )
-from .service import Agent2AllowService
+from .service import Agent2AllowService, IdempotencyConflictError
 from .settings import settings
 
 
@@ -52,9 +52,25 @@ def health() -> dict[str, str]:
 
 
 @app.post("/v1/tool-calls", response_model=ToolCallResponse)
-def tool_calls(request: ToolCallRequest) -> ToolCallResponse:
-    status, message, result, approval_id = app.state.service.handle_tool_call(request)
-    return ToolCallResponse(status=status, message=message, result=result, approval_id=approval_id)
+def tool_calls(
+    request: ToolCallRequest,
+    x_idempotency_key: str | None = Header(default=None, alias="X-Idempotency-Key"),
+) -> ToolCallResponse:
+    if x_idempotency_key:
+        request = request.model_copy(update={"idempotency_key": x_idempotency_key})
+    try:
+        status, message, result, approval_id, idempotent_replay = (
+            app.state.service.handle_tool_call(request)
+        )
+    except IdempotencyConflictError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return ToolCallResponse(
+        status=status,
+        message=message,
+        result=result,
+        approval_id=approval_id,
+        idempotent_replay=idempotent_replay,
+    )
 
 
 @app.get("/v1/approvals/pending", response_model=list[ApprovalView])
