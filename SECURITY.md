@@ -1,27 +1,19 @@
 # Security Policy
 
 ## Supported Versions
-This project is pre-1.0. Security fixes are made on `main`.
+We currently support:
+- `main`
+- the most recent tagged release
 
 ## Responsible Disclosure
-Please do not open public issues for vulnerabilities.
+Please do not report vulnerabilities in public issues.
 
-- Email: security@agent2allow.dev
-- Include: reproduction steps, impact, suggested mitigation
-- Response target: acknowledgement within 3 business days
+Send reports to: `security@agent2allow.com`
 
-## Safe Defaults
-- Deny-by-default policy enforcement
-- Write actions can require human approval
-- Full audit trail for every tool call outcome
-- No credentials in repository; secrets must come from environment variables
+Include:
+- vulnerability description
+- affected components and versions
+- reproduction steps or proof of concept
+- impact assessment (if known)
 
-## Threat Model (MVP)
-- Prompt/tool injection attempts to trigger unauthorized actions
-- Over-scoped credentials used by agent runtime
-- Missing traceability for sensitive operations
-
-Mitigations in MVP:
-- Central policy enforcement before connector execution
-- Repo-scoped allow rules and risk-based approval gates
-- SQLite audit log and JSONL export for post-incident analysis
+We aim to acknowledge reports within 72 hours and follow up with a remediation timeline.

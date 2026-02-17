@@ -1,16 +1,22 @@
 # Contributing
 
-## Setup
-1. Start services: `docker compose up --build -d`
-2. Run gateway tests: `cd gateway && pip install -r requirements-dev.txt && pytest`
-3. Run UI tests: `cd ui && npm install && npm test`
+Thanks for contributing to Agent2Allow.
 
-## Development Guidelines
-- Keep deny-by-default behavior intact.
-- Add tests for policy or approval flow changes.
-- Do not commit credentials or tokens.
+## Development Setup
+1. Start local services:
+   - `docker compose up --build -d`
+2. Run gateway tests:
+   - `cd gateway && pytest`
+3. Run UI tests:
+   - `cd ui && npm ci && npm test`
 
-## Pull Requests
-- Describe behavior change and security impact.
-- Include test evidence.
-- Update docs when API or policy schema changes.
+## Pull Request Rules
+- Keep changes focused and documented.
+- Add or update tests for behavior changes.
+- Include security impact notes when relevant.
+- Update docs for API/policy/workflow changes.
+
+## Security Hygiene
+- Never commit secrets, tokens, private keys, or `.env` files.
+- Use environment variables for credentials.
+- Redact sensitive values from logs and screenshots.
