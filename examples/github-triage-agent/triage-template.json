@@ -1,0 +1,20 @@
+{
+  "default": {
+    "label": "needs-info",
+    "comment": "Thanks for opening this. We marked it as needs-info to gather actionable details."
+  },
+  "rules": [
+    {
+      "name": "bug",
+      "keywords": ["bug", "crash", "error", "exception", "broken"],
+      "label": "bug",
+      "comment": "Thanks for reporting this. We marked it as bug and will investigate."
+    },
+    {
+      "name": "question",
+      "keywords": ["question", "how", "help", "?", "docs"],
+      "label": "question",
+      "comment": "Thanks for the question. We marked this as question and will follow up shortly."
+    }
+  ]
+}

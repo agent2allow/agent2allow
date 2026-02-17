@@ -25,6 +25,16 @@ Expected behavior:
 ## 3. Open UI
 - http://localhost:5173
 
+## 4. Run deterministic smoke check
+```bash
+./scripts/smoke_mock_demo.sh
+```
+
+## Troubleshooting
+- If demo says `Gateway not reachable`, confirm `http://localhost:8000/health`.
+- If ports are busy, stop old containers: `docker compose down`.
+- If Node deps mismatch, run `cd ui && npm ci`.
+
 ## Optional Real GitHub Mode
 ```bash
 export GITHUB_TOKEN=ghp_xxx

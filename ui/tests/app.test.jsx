@@ -24,5 +24,6 @@ test("renders approvals and audit sections", async () => {
   await waitFor(() => {
     expect(screen.getByText("Pending Approvals")).toBeInTheDocument();
     expect(screen.getByText("Audit Log")).toBeInTheDocument();
+    expect(screen.getByText("Export JSONL")).toBeInTheDocument();
   });
 });

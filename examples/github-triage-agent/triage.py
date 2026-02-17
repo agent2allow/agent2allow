@@ -1,10 +1,17 @@
+import json
 import os
+import time
 
 import httpx
 
 
 GATEWAY_URL = os.getenv("AGENT2ALLOW_URL", "http://localhost:8000")
 REPO = os.getenv("GITHUB_REPO", "acme/roadrunner")
+TRIAGE_TEMPLATE_PATH = os.getenv(
+    "TRIAGE_TEMPLATE_PATH", "examples/github-triage-agent/triage-template.json"
+)
+TRIAGE_DRY_RUN = os.getenv("TRIAGE_DRY_RUN", "false").lower() == "true"
+TRIAGE_AUTO_APPROVE = os.getenv("TRIAGE_AUTO_APPROVE", "true").lower() == "true"
 
 
 def tool_call(action: str, repo: str, params: dict) -> dict:
@@ -20,17 +27,39 @@ def tool_call(action: str, repo: str, params: dict) -> dict:
     return response.json()
 
 
-def classify(issue: dict) -> tuple[str, str]:
+def load_template(path: str) -> dict:
+    with open(path, encoding="utf-8") as handle:
+        return json.load(handle)
+
+
+def classify(issue: dict, template: dict) -> tuple[str, str]:
     text = f"{issue.get('title', '')} {issue.get('body', '')}".lower()
-    if "bug" in text or "crash" in text or "error" in text:
-        return "bug", "Thanks for the report. We marked this as bug and will investigate."
-    if "how" in text or "question" in text or issue.get("title", "").strip().endswith("?"):
-        return "question", "Thanks for the question. We marked this as question and will follow up."
-    return "needs-info", "Thanks for opening this. We marked as needs-info to collect more details."
+    for rule in template.get("rules", []):
+        keywords = [k.lower() for k in rule.get("keywords", [])]
+        if any(keyword in text for keyword in keywords):
+            return str(rule["label"]), str(rule["comment"])
+
+    default = template.get("default", {})
+    return str(default.get("label", "needs-info")), str(
+        default.get("comment", "Thanks for opening this. We marked as needs-info to collect more details.")
+    )
+
+
+def read_issues_with_retry(repo: str, attempts: int = 6, delay_seconds: float = 1.0) -> dict:
+    last = {}
+    for _ in range(attempts):
+        response = tool_call("issues.list", repo, {"state": "open"})
+        last = response
+        if response.get("status") == "executed":
+            return response
+        time.sleep(delay_seconds)
+    return last
 
 
 def main() -> None:
     print("== Agent2Allow Demo: GitHub Triage Agent ==")
+    template = load_template(TRIAGE_TEMPLATE_PATH)
+    print(f"Template loaded: {TRIAGE_TEMPLATE_PATH}")
 
     try:
         denied = tool_call("issues.list", "forbidden/repo", {"state": "open"})
@@ -40,13 +69,21 @@ def main() -> None:
 
     print("1) Deny-by-default check:", denied["status"], "-", denied["message"])
 
-    read = tool_call("issues.list", REPO, {"state": "open"})
+    read = read_issues_with_retry(REPO)
     print("2) Read call:", read["status"])
-    issues = read.get("result", {}).get("issues", [])
+    if read["status"] != "executed":
+        print("Read call did not execute. Message:", read.get("message", "unknown"))
+        raise SystemExit(1)
+    issues = (read.get("result") or {}).get("issues", [])
     print(f"   Found {len(issues)} issues")
 
+    planned_writes = 0
     for issue in issues:
-        label, comment = classify(issue)
+        label, comment = classify(issue, template)
+        print(f"   Issue #{issue['number']} classified as: {label}")
+        if TRIAGE_DRY_RUN:
+            continue
+
         label_result = tool_call(
             "issues.set_labels",
             REPO,
@@ -63,25 +100,34 @@ def main() -> None:
             "/",
             comment_result["status"],
         )
+        planned_writes += 2
+
+    if TRIAGE_DRY_RUN:
+        print(f"3) Dry run enabled, no write calls executed. Planned writes: {len(issues) * 2}")
+        return
 
     pending = httpx.get(f"{GATEWAY_URL}/v1/approvals/pending", timeout=20.0)
     pending.raise_for_status()
     approvals = pending.json()
     print(f"4) Pending approvals: {len(approvals)}")
 
-    for item in approvals:
-        approved = httpx.post(
-            f"{GATEWAY_URL}/v1/approvals/{item['id']}/approve",
-            json={"approver": "demo-operator", "reason": "demo approve"},
-            timeout=20.0,
-        )
-        approved.raise_for_status()
-
-    print(f"5) Approved {len(approvals)} actions")
+    if TRIAGE_AUTO_APPROVE:
+        for item in approvals:
+            approved = httpx.post(
+                f"{GATEWAY_URL}/v1/approvals/{item['id']}/approve",
+                json={"approver": "demo-operator", "reason": "demo approve"},
+                timeout=20.0,
+            )
+            approved.raise_for_status()
+        print(f"5) Approved {len(approvals)} actions")
+    else:
+        print("5) Auto-approve disabled; approve pending actions via UI/API.")
 
     audit = httpx.get(f"{GATEWAY_URL}/v1/audit", timeout=20.0)
     audit.raise_for_status()
-    print(f"6) Audit events total: {len(audit.json())}")
+    audit_rows = audit.json()
+    print(f"6) Audit events total: {len(audit_rows)}")
+    print(f"Summary: issues={len(issues)} planned_writes={planned_writes} approvals={len(approvals)}")
 
 
 if __name__ == "__main__":

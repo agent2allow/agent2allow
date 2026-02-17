@@ -98,3 +98,37 @@ If any command is blocked by permissions/plan limits, document exact UI click-pa
 - [ ] Discussions enabled or documented manual fallback.
 - [ ] Branch protection applied or documented manual fallback.
 - [ ] TODO count in repository stays within requested limits.
+
+---
+
+## Iteration 1 (2026-02-17): DX Quickstart + Triage/Audit UX
+
+### Goal
+Improve first-run confidence and operator clarity for the hero use-case.
+
+### Scope
+- Quick Win: actionable README quickstart + smoke demo script + CI smoke execution.
+- Moat Builder: triage rule template and richer audit viewer filters/details.
+
+### Non-goals
+- No connector protocol redesign.
+- No multi-tenant/RBAC expansion in this iteration.
+
+### Files to change
+- `README.md`, `docs/quickstart.md`, `examples/github-triage-agent/README.md`
+- `scripts/smoke_mock_demo.sh`
+- `.github/workflows/ci.yml`
+- `examples/github-triage-agent/triage.py`
+- `examples/github-triage-agent/triage-template.yml`
+- `ui/src/App.jsx`, `ui/src/styles.css`, `ui/tests/app.test.jsx`
+- `docs/TEST_REPORTS/2026-02-17-iteration1.md`
+- `docs/PR_DRAFTS/2026-02-17-iteration1.md`
+
+### Risks and mitigations
+- Risk: CI time increase from smoke job.
+  - Mitigation: run only gateway + mock-github services in smoke script.
+- Risk: UI complexity drift.
+  - Mitigation: keep filter UX minimal and keyboard-friendly.
+
+### Rollback plan
+- Revert smoke job and UI changes independently if instability appears.
