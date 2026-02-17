@@ -33,3 +33,13 @@ rules:
 - approval expectation: `risk: medium|high` can be allowed but still require approval before execution.
 
 When troubleshooting, prefer checking the corresponding audit event first: it captures `decision`, `risk`, and error details for each tool call.
+
+## Validate policy files
+Run the validator before committing policy changes:
+
+```bash
+python3 gateway/scripts/validate_policy.py gateway/config/default-policy.yml
+python3 gateway/scripts/validate_policy.py examples/github-triage-agent/sample-policy.yml
+```
+
+Validation guarantees the MVP schema and blocks dangerous overrides like disabling approval on allowed `medium`/`high` risk actions.

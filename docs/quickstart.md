@@ -36,6 +36,11 @@ Expected behavior:
 - For retriable agent loops, send `X-Idempotency-Key` per tool call.
 - If the same key is replayed with the same payload, response includes `idempotent_replay=true`.
 
+## 6. Run all local checks in one command
+```bash
+./scripts/dev_check.sh
+```
+
 ## Troubleshooting
 - If demo says `Gateway not reachable`, confirm `http://localhost:8000/health`.
 - If ports are busy, stop old containers: `docker compose down`.

@@ -60,6 +60,10 @@ jobs:
           cd gateway
           pip install -r requirements-dev.txt
           ruff check src tests
+      - name: Validate policy templates
+        run: |
+          python3 gateway/scripts/validate_policy.py gateway/config/default-policy.yml
+          python3 gateway/scripts/validate_policy.py examples/github-triage-agent/sample-policy.yml
       - uses: actions/setup-node@v6
         with:
           node-version: '20'
