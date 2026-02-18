@@ -20,6 +20,34 @@ h1 {
   margin-bottom: 1rem;
 }
 
+.system-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+  border: 1px solid #c8c2b3;
+  border-radius: 8px;
+  padding: 0.45rem 0.6rem;
+  background: #f5f1e6;
+  font-size: 0.9rem;
+}
+
+.system-status.ready {
+  border-color: #95c3a9;
+  background: #eaf6ef;
+}
+
+.system-status.starting {
+  border-color: #d6bc84;
+  background: #f8f2e6;
+}
+
+.system-status.down {
+  border-color: #cc9d9d;
+  background: #f8eaea;
+}
+
 section {
   background: #fffdf8;
   border: 1px solid #d8d3c5;

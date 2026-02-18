@@ -48,6 +48,11 @@ Expected behavior:
 ./scripts/dev_check.sh
 ```
 
+Run local diagnostics:
+```bash
+./agent2allow doctor
+```
+
 ## 7. Add a connector
 - Start with `connectors/template/README.md`.
 - Follow `docs/concepts/connectors.md` for contract and test requirements.

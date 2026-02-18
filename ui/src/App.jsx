@@ -29,6 +29,13 @@ export function App() {
   const [approveReasonPreset, setApproveReasonPreset] = useState(reasonPresets.approve[0]);
   const [denyReasonPreset, setDenyReasonPreset] = useState(reasonPresets.deny[0]);
   const [audit, setAudit] = useState([]);
+  const [systemStatus, setSystemStatus] = useState({
+    loading: true,
+    healthy: false,
+    ready: false,
+    checks: {},
+    error: ""
+  });
   const [statusFilter, setStatusFilter] = useState("all");
   const [query, setQuery] = useState("");
   const [expandedAuditIds, setExpandedAuditIds] = useState([]);
@@ -51,8 +58,36 @@ export function App() {
     }
   };
 
+  const loadSystemStatus = async () => {
+    try {
+      setSystemStatus((previous) => ({ ...previous, loading: true, error: "" }));
+      const healthResponse = await fetch(`${apiBase}/health`);
+      const readyResponse = await fetch(`${apiBase}/ready`);
+
+      const healthPayload = healthResponse.ok ? await healthResponse.json() : {};
+      const readyPayload = await readyResponse.json();
+
+      setSystemStatus({
+        loading: false,
+        healthy: healthResponse.ok && healthPayload.status === "ok",
+        ready: readyResponse.ok && readyPayload.ready === true,
+        checks: readyPayload.checks || {},
+        error: ""
+      });
+    } catch (err) {
+      setSystemStatus({
+        loading: false,
+        healthy: false,
+        ready: false,
+        checks: {},
+        error: err.message
+      });
+    }
+  };
+
   useEffect(() => {
     load();
+    loadSystemStatus();
   }, []);
 
   const decide = async (id, decision) => {
@@ -118,6 +153,13 @@ export function App() {
   };
 
   const statusClassName = (status) => `status-chip ${status.replaceAll("_", "-")}`;
+  const systemStatusClassName = systemStatus.error
+    ? "system-status down"
+    : systemStatus.ready
+      ? "system-status ready"
+      : systemStatus.healthy
+        ? "system-status starting"
+        : "system-status down";
 
   const filteredAudit = audit.filter((entry) => {
     const statusMatches = statusFilter === "all" || entry.status === statusFilter;
@@ -141,6 +183,25 @@ export function App() {
   return (
     <main className="page">
       <h1>Agent2Allow Control Panel</h1>
+      <div className={systemStatusClassName}>
+        <strong>System status:</strong>{" "}
+        {systemStatus.loading
+          ? "checking..."
+          : systemStatus.error
+            ? `unreachable (${systemStatus.error})`
+            : systemStatus.ready
+              ? "ready"
+              : "starting"}
+        {!systemStatus.loading && !systemStatus.error && (
+          <span>
+            {" "}
+            [service={String(Boolean(systemStatus.checks.service))}, db=
+            {String(Boolean(systemStatus.checks.database))}, policy=
+            {String(Boolean(systemStatus.checks.policy_file))}]
+          </span>
+        )}
+        <button onClick={loadSystemStatus}>Refresh status</button>
+      </div>
       {error && <p className="error">{error}</p>}
       <div className="stats-row">
         <span className="pill">Pending approvals: {pendingCount}</span>
