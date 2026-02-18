@@ -307,3 +307,37 @@ Make connector contributions faster and safer with explicit implementation guida
 
 ### Rollback plan
 - Remove contract checks and keep docs-only guidance.
+
+---
+
+## Iteration 7 (2026-02-18): Bulk Approval API + Roadmap Refresh
+
+### Goal
+Reduce approval round-trips with a single bulk endpoint and keep roadmap signal aligned with shipped work.
+
+### Scope
+- Quick Win: update roadmap to reflect completed iterations and next priorities.
+- Moat Builder: add `/v1/approvals/bulk` endpoint and switch UI bulk actions to use it.
+
+### Non-goals
+- No queue-based asynchronous approval executor.
+- No role-based approval permissions in this iteration.
+
+### Files to change
+- `gateway/src/schemas.py`
+- `gateway/src/main.py`
+- `gateway/tests/test_integration.py`
+- `ui/src/App.jsx`
+- `docs/ROADMAP.md`
+- `docs/quickstart.md`
+- `docs/TEST_REPORTS/2026-02-18-iteration7.md`
+- `docs/PR_DRAFTS/2026-02-18-iteration7.md`
+
+### Risks and mitigations
+- Risk: partial failures in bulk operations.
+  - Mitigation: return per-ID outcomes and keep endpoint deterministic.
+- Risk: UI and API drift.
+  - Mitigation: UI relies on bulk response contract and falls back to refresh.
+
+### Rollback plan
+- Revert UI back to per-item approval calls and remove bulk endpoint.

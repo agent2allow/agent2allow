@@ -51,3 +51,7 @@
 ## Iteration Selection (2026-02-18, iteration 6)
 - Quick Win: Expanded connector authoring guide with copy-paste skeleton.
 - Moat Builder: Connector contract checks for required client capabilities.
+
+## Iteration Selection (2026-02-18, iteration 7)
+- Quick Win: Roadmap refresh with completed reliability/security milestones.
+- Moat Builder: Bulk approval API endpoint and UI integration.
