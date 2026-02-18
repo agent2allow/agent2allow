@@ -153,3 +153,52 @@ def test_tool_call_idempotency_conflict_returns_409(client):
 
     assert first.status_code == 200
     assert conflict.status_code == 409
+
+
+@respx.mock
+def test_bulk_approval_endpoint_executes_multiple_pending(client):
+    route_issue_1 = respx.post("https://api.github.test/repos/acme/roadrunner/issues/1/labels").mock(
+        return_value=Response(200, json=["bug"])
+    )
+    route_issue_2 = respx.post("https://api.github.test/repos/acme/roadrunner/issues/2/labels").mock(
+        return_value=Response(200, json=["question"])
+    )
+
+    write_1 = client.post(
+        "/v1/tool-calls",
+        json={
+            "agent_id": "triage-agent",
+            "tool": "github",
+            "action": "issues.set_labels",
+            "repo": "acme/roadrunner",
+            "params": {"issue_number": 1, "labels": ["bug"]},
+        },
+    )
+    write_2 = client.post(
+        "/v1/tool-calls",
+        json={
+            "agent_id": "triage-agent",
+            "tool": "github",
+            "action": "issues.set_labels",
+            "repo": "acme/roadrunner",
+            "params": {"issue_number": 2, "labels": ["question"]},
+        },
+    )
+    id_1 = write_1.json()["approval_id"]
+    id_2 = write_2.json()["approval_id"]
+
+    bulk = client.post(
+        "/v1/approvals/bulk",
+        json={
+            "ids": [id_1, id_2],
+            "decision": "approve",
+            "approver": "alice",
+            "reason": "safe labels",
+        },
+    )
+    assert bulk.status_code == 200
+    payload = bulk.json()
+    assert len(payload["results"]) == 2
+    assert {row["status"] for row in payload["results"]} == {"executed"}
+    assert route_issue_1.called
+    assert route_issue_2.called
