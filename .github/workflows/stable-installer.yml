@@ -1,0 +1,44 @@
+name: Deploy Stable Installer Endpoint
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "github-pages-installer"
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Prepare installer artifact
+        run: |
+          mkdir -p installer-site
+          cp scripts/installer-page.html installer-site/index.html
+          cp scripts/install.sh installer-site/install.sh
+          echo "get.agent2allow.com" > installer-site/CNAME
+          chmod +x installer-site/install.sh
+      - uses: actions/configure-pages@v6
+      - name: Upload installer artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: installer-site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4
