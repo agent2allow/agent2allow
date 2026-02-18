@@ -341,3 +341,38 @@ Reduce approval round-trips with a single bulk endpoint and keep roadmap signal 
 
 ### Rollback plan
 - Revert UI back to per-item approval calls and remove bulk endpoint.
+
+---
+
+## Iteration 8 (2026-02-18): Approval Reason Presets + Policy Wizard CLI Scaffold
+
+### Goal
+Increase approval speed and reduce policy authoring friction with safe templates.
+
+### Scope
+- Quick Win: add approval reason presets in UI for single and bulk decisions.
+- Moat Builder: add a minimal CLI to generate policy templates for common scenarios.
+
+### Non-goals
+- No interactive TUI.
+- No full policy editor or policy merge logic.
+
+### Files to change
+- `ui/src/App.jsx`
+- `ui/src/styles.css`
+- `ui/tests/app.test.jsx`
+- `gateway/scripts/policy_wizard.py`
+- `gateway/tests/test_policy_wizard.py`
+- `docs/concepts/policies.md`
+- `docs/quickstart.md`
+- `docs/TEST_REPORTS/2026-02-18-iteration8.md`
+- `docs/PR_DRAFTS/2026-02-18-iteration8.md`
+
+### Risks and mitigations
+- Risk: preset text may be too opinionated.
+  - Mitigation: keep presets short and editable before submission.
+- Risk: wizard-generated policy may be over-permissive.
+  - Mitigation: generated templates keep deny-by-default and explicit repo scope.
+
+### Rollback plan
+- Remove presets and wizard script while keeping core approval/policy flows unchanged.
