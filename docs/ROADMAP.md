@@ -21,9 +21,10 @@
 18. Lightweight RBAC checks for approval decisions.
 19. External audit sink adapter framework (`syslog`, `s3`, `blob`).
 20. Policy diff/check command for policy change reviews.
+21. Optional API key auth for approval mutation endpoints.
 
 ## Next
-1. Add API key auth for approval endpoints (for RBAC identity hardening).
-2. Add signed audit event envelopes for external sink tamper evidence.
-3. Add policy drift detection in CI against production baseline.
-4. Add a small SDK release pipeline (`npm publish` / PyPI publish).
+1. Add signed audit event envelopes for external sink tamper evidence.
+2. Add policy drift detection in CI against production baseline.
+3. Add a small SDK release pipeline (`npm publish` / PyPI publish).
+4. Add per-repo approval policies and scoped reviewer groups.

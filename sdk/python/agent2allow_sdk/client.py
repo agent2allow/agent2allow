@@ -3,8 +3,9 @@ import httpx
 from .openapi_types import ApprovalView, ToolCallRequest, ToolCallResponse
 
 class Agent2AllowClient:
-    def __init__(self, base_url: str = "http://localhost:8000"):
+    def __init__(self, base_url: str = "http://localhost:8000", approval_api_key: str = ""):
         self.base_url = base_url.rstrip("/")
+        self.approval_api_key = approval_api_key
 
     def tool_call(
         self, payload: ToolCallRequest, idempotency_key: str | None = None
@@ -27,18 +28,26 @@ class Agent2AllowClient:
         return response.json()
 
     def approve(self, approval_id: int, approver: str = "human", reason: str = "") -> dict:
+        headers: dict[str, str] = {}
+        if self.approval_api_key:
+            headers["X-Approval-Api-Key"] = self.approval_api_key
         response = httpx.post(
             f"{self.base_url}/v1/approvals/{approval_id}/approve",
             json={"approver": approver, "reason": reason},
+            headers=headers,
             timeout=20.0,
         )
         response.raise_for_status()
         return response.json()
 
     def deny(self, approval_id: int, approver: str = "human", reason: str = "") -> dict:
+        headers: dict[str, str] = {}
+        if self.approval_api_key:
+            headers["X-Approval-Api-Key"] = self.approval_api_key
         response = httpx.post(
             f"{self.base_url}/v1/approvals/{approval_id}/deny",
             json={"approver": approver, "reason": reason},
+            headers=headers,
             timeout=20.0,
         )
         response.raise_for_status()
@@ -51,9 +60,13 @@ class Agent2AllowClient:
         approver: str = "human",
         reason: str = "",
     ) -> dict:
+        headers: dict[str, str] = {}
+        if self.approval_api_key:
+            headers["X-Approval-Api-Key"] = self.approval_api_key
         response = httpx.post(
             f"{self.base_url}/v1/approvals/bulk",
             json={"ids": ids, "decision": decision, "approver": approver, "reason": reason},
+            headers=headers,
             timeout=20.0,
         )
         response.raise_for_status()

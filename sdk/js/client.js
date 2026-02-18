@@ -5,8 +5,9 @@
  */
 
 export class Agent2AllowClient {
-  constructor(baseUrl = "http://localhost:8000") {
+  constructor(baseUrl = "http://localhost:8000", options = {}) {
     this.baseUrl = baseUrl.replace(/\/$/, "");
+    this.approvalApiKey = options.approvalApiKey || "";
   }
 
   /** @returns {Promise<ToolCallResponse>} */
@@ -30,27 +31,39 @@ export class Agent2AllowClient {
   }
 
   async approve(approvalId, approver = "human", reason = "") {
+    const headers = { "Content-Type": "application/json" };
+    if (this.approvalApiKey) {
+      headers["X-Approval-Api-Key"] = this.approvalApiKey;
+    }
     const response = await fetch(`${this.baseUrl}/v1/approvals/${approvalId}/approve`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify({ approver, reason })
     });
     return response.json();
   }
 
   async deny(approvalId, approver = "human", reason = "") {
+    const headers = { "Content-Type": "application/json" };
+    if (this.approvalApiKey) {
+      headers["X-Approval-Api-Key"] = this.approvalApiKey;
+    }
     const response = await fetch(`${this.baseUrl}/v1/approvals/${approvalId}/deny`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify({ approver, reason })
     });
     return response.json();
   }
 
   async bulkApproval(ids, decision, approver = "human", reason = "") {
+    const headers = { "Content-Type": "application/json" };
+    if (this.approvalApiKey) {
+      headers["X-Approval-Api-Key"] = this.approvalApiKey;
+    }
     const response = await fetch(`${this.baseUrl}/v1/approvals/bulk`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify({ ids, decision, approver, reason })
     });
     return response.json();

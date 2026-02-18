@@ -18,7 +18,7 @@ python3 scripts/generate_openapi_types.py
 ```python
 from agent2allow_sdk import Agent2AllowClient
 
-client = Agent2AllowClient("http://localhost:8000")
+client = Agent2AllowClient("http://localhost:8000", approval_api_key="")
 
 read = client.tool_call(
     {

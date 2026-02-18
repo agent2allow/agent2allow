@@ -551,3 +551,45 @@ Close the next roadmap set by improving SDK ergonomics, approval governance, aud
 - Disable RBAC by unsetting `APPROVAL_RBAC_ENABLED`.
 - Set `AUDIT_SINK=none` to disable external sink routing.
 - Remove generated OpenAPI typing artifacts and keep untyped SDK usage.
+
+---
+
+## Iteration 13 (2026-02-18): Approval Endpoint API Key Auth
+
+### Goal
+Harden approval endpoint access with an optional API key gate and preserve RBAC/audit attribution.
+
+### Scope
+- Quick Win: add optional API key authentication for approve/deny/bulk endpoints.
+- Moat Builder: bind API key to identity and feed that identity into RBAC/audit paths.
+
+### Non-goals
+- No user/session auth system.
+- No key rotation service.
+- No per-key scopes beyond identity mapping.
+
+### Files to change
+- `gateway/src/settings.py`
+- `gateway/src/api_auth.py`
+- `gateway/src/main.py`
+- `gateway/tests/test_api_auth.py`
+- `gateway/tests/test_integration.py`
+- `sdk/js/client.js`
+- `sdk/python/agent2allow_sdk/client.py`
+- `sdk/js/README.md`
+- `sdk/python/README.md`
+- `docs/concepts/approvals.md`
+- `docs/quickstart.md`
+- `docs/ROADMAP.md`
+- `CHANGELOG.md`
+- `docs/TEST_REPORTS/2026-02-18-iteration13.md`
+- `docs/PR_DRAFTS/2026-02-18-iteration13.md`
+
+### Risks and mitigations
+- Risk: enabling API keys without configured keys blocks approvals.
+  - Mitigation: keep feature opt-in (`APPROVAL_API_KEY_ENABLED=false` by default).
+- Risk: spoofed `approver` in body could bypass attribution expectations.
+  - Mitigation: when API-key mode is enabled, use mapped identity from key for RBAC/service calls.
+
+### Rollback plan
+- Set `APPROVAL_API_KEY_ENABLED=false` and remove key env vars.

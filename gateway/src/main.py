@@ -5,6 +5,7 @@ from pathlib import Path
 from fastapi import FastAPI, Header, HTTPException, Response
 from sqlalchemy import text
 
+from .api_auth import ApprovalApiKeyAuth
 from .audit_sink import build_audit_sink
 from .connectors.github_client import GithubClient
 from .db import SessionLocal, engine, run_startup_migrations
@@ -62,6 +63,10 @@ async def lifespan(_: FastAPI):
         approve_roles_csv=settings.approval_roles_for_approve,
         deny_roles_csv=settings.approval_roles_for_deny,
         high_risk_approve_roles_csv=settings.approval_roles_for_high_risk_approve,
+    )
+    app.state.approval_api_auth = ApprovalApiKeyAuth(
+        enabled=settings.approval_api_key_enabled,
+        keys_json=settings.approval_api_keys,
     )
     yield
 
@@ -145,22 +150,35 @@ def approvals_pending() -> list[ApprovalView]:
 
 
 @app.post("/v1/approvals/{approval_id}/approve")
-def approvals_approve(approval_id: int, request: ApprovalDecisionRequest) -> dict:
+def approvals_approve(
+    approval_id: int,
+    request: ApprovalDecisionRequest,
+    x_approval_api_key: str | None = Header(default=None, alias="X-Approval-Api-Key"),
+) -> dict:
+    authenticated, identity = app.state.approval_api_auth.authenticate(x_approval_api_key)
+    if not authenticated:
+        if identity == "missing approval api key":
+            raise HTTPException(status_code=401, detail=identity)
+        raise HTTPException(status_code=403, detail=identity)
+
     approval = app.state.service.get_approval(approval_id)
     if approval is None:
         raise HTTPException(status_code=404, detail="approval not found")
     if approval.status != "pending":
         raise HTTPException(status_code=400, detail="approval not pending")
 
+    approver = request.approver
+    if app.state.approval_api_auth.enabled:
+        approver = identity
+
     allowed, reason = app.state.approval_rbac.authorize(
         decision="approve",
-        approver=request.approver,
+        approver=approver,
         risk_level=approval.risk_level,
     )
     if not allowed:
         raise HTTPException(status_code=403, detail=reason)
-
-    status, result = app.state.service.approve(approval_id, request.approver, request.reason)
+    status, result = app.state.service.approve(approval_id, approver, request.reason)
     if status == "not_found":
         raise HTTPException(status_code=404, detail="approval not found")
     if status == "invalid_state":
@@ -169,22 +187,35 @@ def approvals_approve(approval_id: int, request: ApprovalDecisionRequest) -> dic
 
 
 @app.post("/v1/approvals/{approval_id}/deny")
-def approvals_deny(approval_id: int, request: ApprovalDecisionRequest) -> dict:
+def approvals_deny(
+    approval_id: int,
+    request: ApprovalDecisionRequest,
+    x_approval_api_key: str | None = Header(default=None, alias="X-Approval-Api-Key"),
+) -> dict:
+    authenticated, identity = app.state.approval_api_auth.authenticate(x_approval_api_key)
+    if not authenticated:
+        if identity == "missing approval api key":
+            raise HTTPException(status_code=401, detail=identity)
+        raise HTTPException(status_code=403, detail=identity)
+
     approval = app.state.service.get_approval(approval_id)
     if approval is None:
         raise HTTPException(status_code=404, detail="approval not found")
     if approval.status != "pending":
         raise HTTPException(status_code=400, detail="approval not pending")
 
+    approver = request.approver
+    if app.state.approval_api_auth.enabled:
+        approver = identity
+
     allowed, reason = app.state.approval_rbac.authorize(
         decision="deny",
-        approver=request.approver,
+        approver=approver,
         risk_level=approval.risk_level,
     )
     if not allowed:
         raise HTTPException(status_code=403, detail=reason)
-
-    status = app.state.service.deny(approval_id, request.approver, request.reason)
+    status = app.state.service.deny(approval_id, approver, request.reason)
     if status == "not_found":
         raise HTTPException(status_code=404, detail="approval not found")
     if status == "invalid_state":
@@ -193,9 +224,22 @@ def approvals_deny(approval_id: int, request: ApprovalDecisionRequest) -> dict:
 
 
 @app.post("/v1/approvals/bulk")
-def approvals_bulk(request: BulkApprovalRequest) -> dict:
+def approvals_bulk(
+    request: BulkApprovalRequest,
+    x_approval_api_key: str | None = Header(default=None, alias="X-Approval-Api-Key"),
+) -> dict:
+    authenticated, identity = app.state.approval_api_auth.authenticate(x_approval_api_key)
+    if not authenticated:
+        if identity == "missing approval api key":
+            raise HTTPException(status_code=401, detail=identity)
+        raise HTTPException(status_code=403, detail=identity)
+
     if request.decision not in {"approve", "deny"}:
         raise HTTPException(status_code=400, detail="decision must be approve or deny")
+
+    approver = request.approver
+    if app.state.approval_api_auth.enabled:
+        approver = identity
 
     results: list[dict] = []
     for approval_id in request.ids:
@@ -209,7 +253,7 @@ def approvals_bulk(request: BulkApprovalRequest) -> dict:
 
         allowed, reason = app.state.approval_rbac.authorize(
             decision=request.decision,
-            approver=request.approver,
+            approver=approver,
             risk_level=approval.risk_level,
         )
         if not allowed:
@@ -219,7 +263,7 @@ def approvals_bulk(request: BulkApprovalRequest) -> dict:
         if request.decision == "approve":
             status, result = app.state.service.approve(
                 approval_id,
-                request.approver,
+                approver,
                 request.reason,
             )
             if status == "not_found":
@@ -229,7 +273,7 @@ def approvals_bulk(request: BulkApprovalRequest) -> dict:
             else:
                 results.append({"id": approval_id, "status": status, "result": result})
         else:
-            status = app.state.service.deny(approval_id, request.approver, request.reason)
+            status = app.state.service.deny(approval_id, approver, request.reason)
             results.append({"id": approval_id, "status": status})
     return {"results": results}
 

@@ -133,6 +133,21 @@ export APPROVAL_ROLES_FOR_APPROVE=reviewer,admin
 export APPROVAL_ROLES_FOR_HIGH_RISK_APPROVE=admin
 ```
 
+## Optional Approval API Key Auth
+Require API key auth on approval mutation endpoints:
+```bash
+export APPROVAL_API_KEY_ENABLED=true
+export APPROVAL_API_KEYS='{"k-ops":"ops-reviewer"}'
+```
+
+Send header:
+```bash
+curl -X POST http://localhost:8000/v1/approvals/1/approve \
+  -H "Content-Type: application/json" \
+  -H "X-Approval-Api-Key: k-ops" \
+  -d '{"approver":"ignored-when-api-key-enabled","reason":"safe change"}'
+```
+
 ## Optional External Audit Sink
 Forward every audit event to an external sink:
 

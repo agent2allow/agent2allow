@@ -11,6 +11,7 @@ All notable changes to this project are documented in this file.
 - Lightweight approval RBAC guards on approve/deny/bulk approval endpoints.
 - External audit sink adapter framework (`none`, `syslog`, `s3`, `blob`).
 - Policy diff/check CLI: `gateway/scripts/policy_diff.py` and `./agent2allow policy-diff`.
+- Optional API key auth for approval mutation endpoints (`X-Approval-Api-Key`).
 
 ## [0.1.0] - 2026-02-18
 ### Added

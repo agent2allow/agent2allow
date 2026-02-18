@@ -405,6 +405,24 @@
     "/v1/approvals/bulk": {
       "post": {
         "operationId": "approvals_bulk_v1_approvals_bulk_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Approval-Api-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Approval-Api-Key"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -476,6 +494,22 @@
               "title": "Approval Id",
               "type": "integer"
             }
+          },
+          {
+            "in": "header",
+            "name": "X-Approval-Api-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Approval-Api-Key"
+            }
           }
         ],
         "requestBody": {
@@ -526,6 +560,22 @@
             "schema": {
               "title": "Approval Id",
               "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Approval-Api-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Approval-Api-Key"
             }
           }
         ],

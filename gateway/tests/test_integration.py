@@ -1,6 +1,7 @@
 import respx
 from httpx import Response
 
+from src.api_auth import ApprovalApiKeyAuth
 from src.models import Approval
 from src.rbac import ApprovalRBAC
 
@@ -290,6 +291,83 @@ def test_approval_rbac_requires_admin_for_high_risk(client):
     approved = client.post(
         f"/v1/approvals/{approval_id}/approve",
         json={"approver": "bob", "reason": "approved"},
+    )
+    assert approved.status_code == 200
+    assert approved.json()["status"] == "executed"
+
+
+@respx.mock
+def test_approval_api_key_blocks_missing_and_invalid_keys(client):
+    client.app.state.approval_api_auth = ApprovalApiKeyAuth(
+        enabled=True,
+        keys_json='{"k-ops":"ops-reviewer"}',
+    )
+    respx.post("https://api.github.test/repos/acme/roadrunner/issues/1/labels").mock(
+        return_value=Response(200, json=["bug"])
+    )
+    write = client.post(
+        "/v1/tool-calls",
+        json={
+            "agent_id": "triage-agent",
+            "tool": "github",
+            "action": "issues.set_labels",
+            "repo": "acme/roadrunner",
+            "params": {"issue_number": 1, "labels": ["bug"]},
+        },
+    )
+    approval_id = write.json()["approval_id"]
+
+    missing = client.post(
+        f"/v1/approvals/{approval_id}/approve",
+        json={"approver": "alice", "reason": "ok"},
+    )
+    invalid = client.post(
+        f"/v1/approvals/{approval_id}/approve",
+        headers={"X-Approval-Api-Key": "bad-key"},
+        json={"approver": "alice", "reason": "ok"},
+    )
+
+    assert missing.status_code == 401
+    assert invalid.status_code == 403
+
+
+@respx.mock
+def test_approval_api_key_valid_key_allows_approve(client):
+    client.app.state.approval_api_auth = ApprovalApiKeyAuth(
+        enabled=True,
+        keys_json='{"k-ops":"ops-reviewer"}',
+    )
+    client.app.state.approval_rbac = ApprovalRBAC(
+        enabled=True,
+        role_bindings_json='{"ops-reviewer":"admin"}',
+        approve_roles_csv="reviewer,admin",
+        deny_roles_csv="reviewer,admin",
+        high_risk_approve_roles_csv="admin",
+    )
+    respx.post("https://api.github.test/repos/acme/roadrunner/issues/1/labels").mock(
+        return_value=Response(200, json=["bug"])
+    )
+    write = client.post(
+        "/v1/tool-calls",
+        json={
+            "agent_id": "triage-agent",
+            "tool": "github",
+            "action": "issues.set_labels",
+            "repo": "acme/roadrunner",
+            "params": {"issue_number": 1, "labels": ["bug"]},
+        },
+    )
+    approval_id = write.json()["approval_id"]
+    with client.app.state.service.session_factory() as db:
+        approval = db.get(Approval, approval_id)
+        assert approval is not None
+        approval.risk_level = "high"
+        db.commit()
+
+    approved = client.post(
+        f"/v1/approvals/{approval_id}/approve",
+        headers={"X-Approval-Api-Key": "k-ops"},
+        json={"approver": "alice", "reason": "ok"},
     )
     assert approved.status_code == 200
     assert approved.json()["status"] == "executed"

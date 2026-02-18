@@ -19,7 +19,9 @@ This exports the gateway OpenAPI schema and regenerates `openapi-types.d.ts`.
 ```js
 import { Agent2AllowClient } from "./client.js";
 
-const client = new Agent2AllowClient("http://localhost:8000");
+const client = new Agent2AllowClient("http://localhost:8000", {
+  approvalApiKey: process.env.APPROVAL_API_KEY || ""
+});
 
 const read = await client.toolCall(
   {

@@ -23,3 +23,16 @@ Approval RBAC can be enabled with environment settings:
 When enabled:
 - approvers without a mapped role receive `403`
 - high-risk approvals can be restricted to admin-only roles
+
+## Optional API Key Auth
+Approval mutation endpoints can require API keys:
+- `APPROVAL_API_KEY_ENABLED=true`
+- `APPROVAL_API_KEYS` as JSON key->identity map (example: `{"k-ops":"ops-reviewer"}`)
+
+Behavior:
+- Missing key on approve/deny/bulk endpoint -> `401`
+- Invalid key -> `403`
+- Valid key -> request is attributed to mapped identity for RBAC/audit
+
+Header:
+- `X-Approval-Api-Key: <key>`

@@ -15,6 +15,8 @@ class Settings(BaseSettings):
     approval_roles_for_approve: str = "reviewer,admin"
     approval_roles_for_deny: str = "reviewer,admin"
     approval_roles_for_high_risk_approve: str = "admin"
+    approval_api_key_enabled: bool = False
+    approval_api_keys: str = ""
     audit_sink: str = "none"
     audit_sink_syslog_host: str = "localhost"
     audit_sink_syslog_port: int = 514
