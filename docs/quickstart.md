@@ -44,6 +44,10 @@ Expected behavior:
 ./scripts/dev_check.sh
 ```
 
+## 7. Add a connector
+- Start with `connectors/template/README.md`.
+- Follow `docs/concepts/connectors.md` for contract and test requirements.
+
 ## Troubleshooting
 - If demo says `Gateway not reachable`, confirm `http://localhost:8000/health`.
 - If ports are busy, stop old containers: `docker compose down`.

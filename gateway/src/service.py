@@ -7,7 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from .connectors.github_client import GithubClient
+from .connectors.contracts import GithubConnectorContract
 from .models import Approval, AuditLog, IdempotencyRecord
 from .policy import PolicyDecision, PolicyEngine
 from .schemas import ToolCallRequest
@@ -24,8 +24,10 @@ class Agent2AllowService:
         self,
         session_factory: Callable[[], Session],
         policy_engine: PolicyEngine,
-        github_client: GithubClient,
+        github_client: GithubConnectorContract,
     ):
+        if not isinstance(github_client, GithubConnectorContract):
+            raise TypeError("github_client does not satisfy GithubConnectorContract")
         self.session_factory = session_factory
         self.policy_engine = policy_engine
         self.github_client = github_client
