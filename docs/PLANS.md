@@ -376,3 +376,39 @@ Increase approval speed and reduce policy authoring friction with safe templates
 
 ### Rollback plan
 - Remove presets and wizard script while keeping core approval/policy flows unchanged.
+
+---
+
+## Iteration 9 (2026-02-18): Health/Readiness Probes + Real-Mode Safety Tests
+
+### Goal
+Improve operational readiness signals and provide optional safety checks for real GitHub mode.
+
+### Scope
+- Quick Win: add `/ready` endpoint and compose healthchecks.
+- Moat Builder: add optional real-mode integration tests gated by explicit env vars.
+
+### Non-goals
+- No production-grade synthetic monitoring stack.
+- No destructive real-mode write tests.
+
+### Files to change
+- `gateway/src/main.py`
+- `gateway/tests/test_integration.py`
+- `gateway/tests/test_real_mode_safety.py`
+- `connectors/github/mock_server.py`
+- `docker-compose.yml`
+- `scripts/smoke_mock_demo.sh`
+- `docs/quickstart.md`
+- `docs/deployment/docker.md`
+- `docs/TEST_REPORTS/2026-02-18-iteration9.md`
+- `docs/PR_DRAFTS/2026-02-18-iteration9.md`
+
+### Risks and mitigations
+- Risk: readiness checks may create false negatives in slower environments.
+  - Mitigation: bounded retry loops and lightweight DB/policy checks only.
+- Risk: real-mode tests could accidentally run in CI.
+  - Mitigation: strict env gate (`REAL_GITHUB_ENABLE_TESTS=true` + token + repo).
+
+### Rollback plan
+- Revert `/ready` and compose healthcheck additions; keep `/health` unchanged.

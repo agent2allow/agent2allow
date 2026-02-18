@@ -10,8 +10,20 @@ services:
       GITHUB_TOKEN: ${GITHUB_TOKEN:-}
     ports:
       - "8000:8000"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request,sys;sys.exit(0 if urllib.request.urlopen('http://localhost:8000/ready').status==200 else 1)",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
     depends_on:
-      - mock-github
+      mock-github:
+        condition: service_healthy
 
   mock-github:
     image: python:3.12-slim
@@ -23,6 +35,17 @@ services:
       - .:/app
     ports:
       - "8081:8081"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request,sys;sys.exit(0 if urllib.request.urlopen('http://localhost:8081/health').status==200 else 1)",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
   ui:
     image: node:20-alpine
@@ -34,5 +57,11 @@ services:
       - .:/app
     ports:
       - "5173:5173"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:5173"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
     depends_on:
-      - gateway
+      gateway:
+        condition: service_healthy

@@ -2,7 +2,8 @@ import json
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI, Header, HTTPException
+from fastapi import FastAPI, Header, HTTPException, Response
+from sqlalchemy import text
 
 from .connectors.github_client import GithubClient
 from .db import SessionLocal, engine, run_startup_migrations
@@ -51,6 +52,34 @@ app = FastAPI(title="Agent2Allow", version="0.1.0", lifespan=lifespan)
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.get("/ready")
+def ready(response: Response) -> dict[str, str | bool | dict[str, bool]]:
+    checks: dict[str, bool] = {"service": False, "database": False, "policy_file": False}
+
+    service = getattr(app.state, "service", None)
+    if service is not None:
+        checks["service"] = True
+        policy_path = Path(service.policy_engine.policy_path)
+        checks["policy_file"] = policy_path.exists()
+
+    try:
+        with engine.connect() as connection:
+            connection.execute(text("SELECT 1"))
+        checks["database"] = True
+    except Exception:
+        checks["database"] = False
+
+    ready_state = all(checks.values())
+    payload: dict[str, str | bool | dict[str, bool]] = {
+        "status": "ok" if ready_state else "not_ready",
+        "ready": ready_state,
+        "checks": checks,
+    }
+    if not ready_state:
+        response.status_code = 503
+    return payload
 
 
 @app.post("/v1/tool-calls", response_model=ToolCallResponse)

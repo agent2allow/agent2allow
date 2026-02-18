@@ -12,14 +12,14 @@ trap cleanup EXIT
 echo "[smoke] starting gateway + mock-github"
 docker compose up -d --build gateway mock-github
 
-echo "[smoke] waiting for gateway health"
+echo "[smoke] waiting for gateway readiness"
 for _ in {1..45}; do
-  if curl -fsS http://localhost:8000/health >/dev/null; then
+  if curl -fsS http://localhost:8000/ready >/dev/null; then
     break
   fi
   sleep 1
 done
-curl -fsS http://localhost:8000/health >/dev/null
+curl -fsS http://localhost:8000/ready >/dev/null
 
 echo "[smoke] running demo"
 DEMO_OUTPUT="$(npm run -s demo)"

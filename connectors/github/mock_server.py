@@ -12,6 +12,11 @@ class CommentPayload(BaseModel):
     body: str
 
 
+@app.get("/health")
+def health() -> dict[str, str]:
+    return {"status": "ok"}
+
+
 DATA = {
     "acme/roadrunner": {
         "issues": [

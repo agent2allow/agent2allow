@@ -2,6 +2,20 @@ import respx
 from httpx import Response
 
 
+def test_health_and_ready(client):
+    health = client.get("/health")
+    assert health.status_code == 200
+    assert health.json()["status"] == "ok"
+
+    ready = client.get("/ready")
+    assert ready.status_code == 200
+    payload = ready.json()
+    assert payload["ready"] is True
+    assert payload["checks"]["service"] is True
+    assert payload["checks"]["database"] is True
+    assert payload["checks"]["policy_file"] is True
+
+
 def test_denied_without_matching_repo(client):
     response = client.post(
         "/v1/tool-calls",

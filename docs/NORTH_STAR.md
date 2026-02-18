@@ -59,3 +59,7 @@
 ## Iteration Selection (2026-02-18, iteration 8)
 - Quick Win: Approval reason presets in UI.
 - Moat Builder: Policy wizard CLI scaffold for common templates.
+
+## Iteration Selection (2026-02-18, iteration 9)
+- Quick Win: Health/readiness probes in gateway and compose.
+- Moat Builder: Optional real-mode safety integration tests.
