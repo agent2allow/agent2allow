@@ -17,3 +17,7 @@ Include:
 - impact assessment (if known)
 
 We aim to acknowledge reports within 72 hours and follow up with a remediation timeline.
+
+## Security Docs
+- Threat model: `docs/security/threat-model.md`
+- Incident response: `docs/security/incident-response.md`

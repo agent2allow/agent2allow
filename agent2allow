@@ -9,7 +9,7 @@ case "${1:-}" in
     exec "$ROOT_DIR/scripts/doctor.sh" "$@"
     ;;
   *)
-    echo "Usage: ./agent2allow doctor"
+    echo "Usage: ./agent2allow doctor [--json] [--strict]"
     exit 1
     ;;
 esac

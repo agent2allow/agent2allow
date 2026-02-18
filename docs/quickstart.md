@@ -52,6 +52,14 @@ Run local diagnostics:
 ```bash
 ./agent2allow doctor
 ```
+Machine-readable diagnostics:
+```bash
+./agent2allow doctor --json
+```
+Strict mode (fail on warnings too):
+```bash
+./agent2allow doctor --strict
+```
 
 ## 7. Add a connector
 - Start with `connectors/template/README.md`.
@@ -99,3 +107,7 @@ export REAL_GITHUB_TOKEN=ghp_xxx
 export REAL_GITHUB_REPO=owner/repo
 cd gateway && pytest -q tests/test_real_mode_safety.py
 ```
+
+Manual GitHub workflow alternative:
+- Configure repo secret `REAL_GITHUB_TOKEN`.
+- Run workflow `Real-Mode Safety` and provide `github_repo` input.

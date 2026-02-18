@@ -36,6 +36,10 @@ Smoke test script:
 - `docs/concepts/approvals.md`
 - `docs/concepts/audit.md`
 - `docs/deployment/docker.md`
+- `docs/security/threat-model.md`
+- `docs/security/incident-response.md`
+- `docs/releasing.md`
+- `CHANGELOG.md`
 
 ## Development
 ```bash

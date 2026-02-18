@@ -28,6 +28,8 @@ export function App() {
   const [selectedApprovalIds, setSelectedApprovalIds] = useState([]);
   const [approveReasonPreset, setApproveReasonPreset] = useState(reasonPresets.approve[0]);
   const [denyReasonPreset, setDenyReasonPreset] = useState(reasonPresets.deny[0]);
+  const [approveReasonCustom, setApproveReasonCustom] = useState("");
+  const [denyReasonCustom, setDenyReasonCustom] = useState("");
   const [audit, setAudit] = useState([]);
   const [systemStatus, setSystemStatus] = useState({
     loading: true,
@@ -37,6 +39,7 @@ export function App() {
     error: ""
   });
   const [statusFilter, setStatusFilter] = useState("all");
+  const [schemaVersionFilter, setSchemaVersionFilter] = useState("all");
   const [query, setQuery] = useState("");
   const [expandedAuditIds, setExpandedAuditIds] = useState([]);
   const [error, setError] = useState("");
@@ -91,7 +94,9 @@ export function App() {
   }, []);
 
   const decide = async (id, decision) => {
-    const reason = decision === "approve" ? approveReasonPreset : denyReasonPreset;
+    const reason = decision === "approve"
+      ? (approveReasonCustom.trim() || approveReasonPreset)
+      : (denyReasonCustom.trim() || denyReasonPreset);
     await fetchJson(`/v1/approvals/${id}/${decision}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -101,7 +106,9 @@ export function App() {
   };
 
   const decideMany = async (decision) => {
-    const reason = decision === "approve" ? approveReasonPreset : denyReasonPreset;
+    const reason = decision === "approve"
+      ? (approveReasonCustom.trim() || approveReasonPreset)
+      : (denyReasonCustom.trim() || denyReasonPreset);
     await fetchJson("/v1/approvals/bulk", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -166,6 +173,11 @@ export function App() {
     if (!statusMatches) {
       return false;
     }
+    const schemaVersionMatches = schemaVersionFilter === "all"
+      || String(entry.schema_version) === schemaVersionFilter;
+    if (!schemaVersionMatches) {
+      return false;
+    }
     const normalized = query.trim().toLowerCase();
     if (!normalized) {
       return true;
@@ -179,6 +191,8 @@ export function App() {
 
   const pendingCount = approvals.length;
   const deniedCount = audit.filter((entry) => entry.status === "denied").length;
+  const schemaVersions = Array.from(new Set(audit.map((entry) => String(entry.schema_version))))
+    .sort((a, b) => Number(a) - Number(b));
 
   return (
     <main className="page">
@@ -244,6 +258,15 @@ export function App() {
             </select>
           </label>
           <label>
+            Custom approve reason (optional)
+            <input
+              type="text"
+              value={approveReasonCustom}
+              onChange={(event) => setApproveReasonCustom(event.target.value)}
+              placeholder="Overrides approve preset when non-empty"
+            />
+          </label>
+          <label>
             Deny reason
             <select
               value={denyReasonPreset}
@@ -255,6 +278,15 @@ export function App() {
                 </option>
               ))}
             </select>
+          </label>
+          <label>
+            Custom deny reason (optional)
+            <input
+              type="text"
+              value={denyReasonCustom}
+              onChange={(event) => setDenyReasonCustom(event.target.value)}
+              placeholder="Overrides deny preset when non-empty"
+            />
           </label>
         </div>
 
@@ -315,7 +347,19 @@ export function App() {
             <option value="approved">approved</option>
             <option value="denied_by_human">denied_by_human</option>
             <option value="executed">executed</option>
+            <option value="idempotent_replay">idempotent_replay</option>
             <option value="error">error</option>
+          </select>
+          <select
+            value={schemaVersionFilter}
+            onChange={(event) => setSchemaVersionFilter(event.target.value)}
+          >
+            <option value="all">All schema versions</option>
+            {schemaVersions.map((value) => (
+              <option key={value} value={value}>
+                schema v{value}
+              </option>
+            ))}
           </select>
         </div>
         <div className="table-wrap">
