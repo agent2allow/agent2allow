@@ -412,3 +412,37 @@ Improve operational readiness signals and provide optional safety checks for rea
 
 ### Rollback plan
 - Revert `/ready` and compose healthcheck additions; keep `/health` unchanged.
+
+---
+
+## Iteration 10 (2026-02-18): UI Status Banner + Local Doctor Diagnostics
+
+### Goal
+Provide immediate runtime visibility in UI and a single local command to diagnose environment/setup issues.
+
+### Scope
+- Quick Win: add a status banner in UI using `/health` + `/ready` checks.
+- Moat Builder: add `scripts/doctor.sh` for local diagnostics (docker, endpoints, policy validation, compose config).
+
+### Non-goals
+- No remote monitoring integration.
+- No automatic remediation in doctor command.
+
+### Files to change
+- `ui/src/App.jsx`
+- `ui/src/styles.css`
+- `ui/tests/app.test.jsx`
+- `scripts/doctor.sh`
+- `docs/quickstart.md`
+- `docs/deployment/docker.md`
+- `docs/TEST_REPORTS/2026-02-18-iteration10.md`
+- `docs/PR_DRAFTS/2026-02-18-iteration10.md`
+
+### Risks and mitigations
+- Risk: status banner may show transient false negatives during startup.
+  - Mitigation: explicit loading/unknown state and clear refresh action.
+- Risk: doctor command may fail in WSL without Docker integration.
+  - Mitigation: treat missing/unusable docker as warning and continue checks.
+
+### Rollback plan
+- Remove status banner and doctor script while keeping `/health` and `/ready` endpoints.

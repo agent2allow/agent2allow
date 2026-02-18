@@ -4,6 +4,22 @@ import { App } from "../src/App";
 
 beforeEach(() => {
   global.fetch = vi.fn((url) => {
+    if (url.toString().includes("/health")) {
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ status: "ok" })
+      });
+    }
+    if (url.toString().includes("/ready")) {
+      return Promise.resolve({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            ready: true,
+            checks: { service: true, database: true, policy_file: true }
+          })
+      });
+    }
     if (url.toString().includes("/v1/approvals/pending")) {
       return Promise.resolve({
         ok: true,
@@ -57,8 +73,10 @@ afterEach(() => {
 
 test("renders approvals and audit sections", async () => {
   render(<App />);
-  expect(screen.getByText("Agent2Allow Control Panel")).toBeInTheDocument();
+    expect(screen.getByText("Agent2Allow Control Panel")).toBeInTheDocument();
   await waitFor(() => {
+    expect(screen.getByText(/System status:/)).toBeInTheDocument();
+    expect(screen.getByText("Refresh status")).toBeInTheDocument();
     expect(screen.getByText("Pending Approvals")).toBeInTheDocument();
     expect(screen.getByText("Approve selected")).toBeInTheDocument();
     expect(screen.getByText("Deny selected")).toBeInTheDocument();

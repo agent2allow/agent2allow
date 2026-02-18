@@ -20,3 +20,10 @@ Services:
 ## Probe Endpoints
 - Liveness: `GET /health` (gateway)
 - Readiness: `GET /ready` (gateway, verifies service init + DB + policy file)
+
+## Local Diagnostics
+Run:
+```bash
+./agent2allow doctor
+```
+This checks docker/compose availability, policy templates, and local endpoint reachability.

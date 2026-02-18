@@ -63,3 +63,7 @@
 ## Iteration Selection (2026-02-18, iteration 9)
 - Quick Win: Health/readiness probes in gateway and compose.
 - Moat Builder: Optional real-mode safety integration tests.
+
+## Iteration Selection (2026-02-18, iteration 10)
+- Quick Win: UI system status banner for health/readiness visibility.
+- Moat Builder: `agent2allow doctor` local diagnostics script.
