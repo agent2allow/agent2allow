@@ -67,3 +67,7 @@
 ## Iteration Selection (2026-02-18, iteration 10)
 - Quick Win: UI system status banner for health/readiness visibility.
 - Moat Builder: `agent2allow doctor` local diagnostics script.
+
+## Iteration Selection (2026-02-18, iteration 11)
+- Quick Win: Release/docs/security completion (changelog, threat model, incident runbook).
+- Moat Builder: Real-mode safety workflow + doctor JSON/strict mode + UX filter/composer refinements.

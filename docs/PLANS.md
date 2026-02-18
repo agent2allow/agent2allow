@@ -446,3 +446,44 @@ Provide immediate runtime visibility in UI and a single local command to diagnos
 
 ### Rollback plan
 - Remove status banner and doctor script while keeping `/health` and `/ready` endpoints.
+
+---
+
+## Iteration 11 (2026-02-18): Final Gap Closure (Release, Security, Ops UX)
+
+### Goal
+Close the remaining product-readiness gaps: release hygiene, security operations docs, real-mode workflow, and diagnostics/operator UX.
+
+### Scope
+- Quick Win: add CHANGELOG and security runbook artifacts.
+- Moat Builder: add manual real-mode workflow, doctor JSON/strict mode, and UI filter/reason usability refinements.
+
+### Non-goals
+- No automated semantic-release pipeline.
+- No production secret rotation automation.
+
+### Files to change
+- `CHANGELOG.md`
+- `docs/releasing.md`
+- `docs/security/threat-model.md`
+- `docs/security/incident-response.md`
+- `SECURITY.md`
+- `.github/workflows/real-mode-safety.yml`
+- `scripts/doctor.sh`
+- `agent2allow`
+- `ui/src/App.jsx`
+- `ui/src/styles.css`
+- `ui/tests/app.test.jsx`
+- `docs/quickstart.md`
+- `docs/ROADMAP.md`
+- `docs/TEST_REPORTS/2026-02-18-iteration11.md`
+- `docs/PR_DRAFTS/2026-02-18-iteration11.md`
+
+### Risks and mitigations
+- Risk: manual real-mode workflow could be run with wrong repo scope.
+  - Mitigation: explicit input + read-only test design + policy deny assertions.
+- Risk: stricter doctor behavior could break existing local flows.
+  - Mitigation: strict mode opt-in via `--strict`, default remains warning-tolerant.
+
+### Rollback plan
+- Revert workflow and doctor flags; keep baseline CI and diagnostics intact.

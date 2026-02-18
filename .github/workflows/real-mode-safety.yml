@@ -1,0 +1,36 @@
+name: Real-Mode Safety
+
+on:
+  workflow_dispatch:
+    inputs:
+      github_repo:
+        description: "Target repo for read-only safety checks (owner/repo)"
+        required: true
+        type: string
+
+jobs:
+  real-mode-safety:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Validate required secret
+        run: |
+          if [ -z "${{ secrets.REAL_GITHUB_TOKEN }}" ]; then
+            echo "Missing repository secret: REAL_GITHUB_TOKEN"
+            exit 1
+          fi
+      - name: Install gateway dependencies
+        run: |
+          cd gateway
+          pip install -r requirements-dev.txt
+      - name: Run real-mode safety tests
+        env:
+          REAL_GITHUB_ENABLE_TESTS: "true"
+          REAL_GITHUB_TOKEN: ${{ secrets.REAL_GITHUB_TOKEN }}
+          REAL_GITHUB_REPO: ${{ inputs.github_repo }}
+        run: |
+          cd gateway
+          pytest -q tests/test_real_mode_safety.py
