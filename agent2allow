@@ -8,8 +8,14 @@ case "${1:-}" in
     shift
     exec "$ROOT_DIR/scripts/doctor.sh" "$@"
     ;;
+  policy-diff)
+    shift
+    exec python3 "$ROOT_DIR/gateway/scripts/policy_diff.py" "$@"
+    ;;
   *)
-    echo "Usage: ./agent2allow doctor [--json] [--strict]"
+    echo "Usage:"
+    echo "  ./agent2allow doctor [--json] [--strict]"
+    echo "  ./agent2allow policy-diff <old-policy.yml> <new-policy.yml> [--json] [--strict]"
     exit 1
     ;;
 esac

@@ -23,6 +23,11 @@ Smoke test script:
 ./scripts/smoke_mock_demo.sh
 ```
 
+Policy change review helper:
+```bash
+./agent2allow policy-diff old-policy.yml new-policy.yml --strict
+```
+
 ## Architecture Overview
 - `gateway/`: policy enforcement, approval workflow, audit logging
 - `ui/`: minimal operator UI for pending approvals and audit events

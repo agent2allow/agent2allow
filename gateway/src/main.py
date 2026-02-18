@@ -5,10 +5,12 @@ from pathlib import Path
 from fastapi import FastAPI, Header, HTTPException, Response
 from sqlalchemy import text
 
+from .audit_sink import build_audit_sink
 from .connectors.github_client import GithubClient
 from .db import SessionLocal, engine, run_startup_migrations
 from .models import Base
 from .policy import PolicyEngine
+from .rbac import ApprovalRBAC
 from .schemas import (
     ApprovalDecisionRequest,
     ApprovalView,
@@ -35,6 +37,17 @@ def build_service() -> Agent2AllowService:
             retry_attempts=settings.github_retry_attempts,
             retry_backoff_ms=settings.github_retry_backoff_ms,
         ),
+        audit_sink=build_audit_sink(
+            sink_type=settings.audit_sink,
+            syslog_host=settings.audit_sink_syslog_host,
+            syslog_port=settings.audit_sink_syslog_port,
+            syslog_facility=settings.audit_sink_syslog_facility,
+            s3_bucket=settings.audit_sink_s3_bucket,
+            s3_prefix=settings.audit_sink_s3_prefix,
+            blob_container=settings.audit_sink_blob_container,
+            blob_prefix=settings.audit_sink_blob_prefix,
+            blob_connection_string=settings.audit_sink_blob_connection_string,
+        ),
     )
 
 
@@ -43,6 +56,13 @@ async def lifespan(_: FastAPI):
     Base.metadata.create_all(bind=engine)
     run_startup_migrations()
     app.state.service = build_service()
+    app.state.approval_rbac = ApprovalRBAC(
+        enabled=settings.approval_rbac_enabled,
+        role_bindings_json=settings.approval_role_bindings,
+        approve_roles_csv=settings.approval_roles_for_approve,
+        deny_roles_csv=settings.approval_roles_for_deny,
+        high_risk_approve_roles_csv=settings.approval_roles_for_high_risk_approve,
+    )
     yield
 
 
@@ -126,6 +146,20 @@ def approvals_pending() -> list[ApprovalView]:
 
 @app.post("/v1/approvals/{approval_id}/approve")
 def approvals_approve(approval_id: int, request: ApprovalDecisionRequest) -> dict:
+    approval = app.state.service.get_approval(approval_id)
+    if approval is None:
+        raise HTTPException(status_code=404, detail="approval not found")
+    if approval.status != "pending":
+        raise HTTPException(status_code=400, detail="approval not pending")
+
+    allowed, reason = app.state.approval_rbac.authorize(
+        decision="approve",
+        approver=request.approver,
+        risk_level=approval.risk_level,
+    )
+    if not allowed:
+        raise HTTPException(status_code=403, detail=reason)
+
     status, result = app.state.service.approve(approval_id, request.approver, request.reason)
     if status == "not_found":
         raise HTTPException(status_code=404, detail="approval not found")
@@ -136,6 +170,20 @@ def approvals_approve(approval_id: int, request: ApprovalDecisionRequest) -> dic
 
 @app.post("/v1/approvals/{approval_id}/deny")
 def approvals_deny(approval_id: int, request: ApprovalDecisionRequest) -> dict:
+    approval = app.state.service.get_approval(approval_id)
+    if approval is None:
+        raise HTTPException(status_code=404, detail="approval not found")
+    if approval.status != "pending":
+        raise HTTPException(status_code=400, detail="approval not pending")
+
+    allowed, reason = app.state.approval_rbac.authorize(
+        decision="deny",
+        approver=request.approver,
+        risk_level=approval.risk_level,
+    )
+    if not allowed:
+        raise HTTPException(status_code=403, detail=reason)
+
     status = app.state.service.deny(approval_id, request.approver, request.reason)
     if status == "not_found":
         raise HTTPException(status_code=404, detail="approval not found")
@@ -151,6 +199,23 @@ def approvals_bulk(request: BulkApprovalRequest) -> dict:
 
     results: list[dict] = []
     for approval_id in request.ids:
+        approval = app.state.service.get_approval(approval_id)
+        if approval is None:
+            results.append({"id": approval_id, "status": "not_found"})
+            continue
+        if approval.status != "pending":
+            results.append({"id": approval_id, "status": "invalid_state"})
+            continue
+
+        allowed, reason = app.state.approval_rbac.authorize(
+            decision=request.decision,
+            approver=request.approver,
+            risk_level=approval.risk_level,
+        )
+        if not allowed:
+            results.append({"id": approval_id, "status": "forbidden", "message": reason})
+            continue
+
         if request.decision == "approve":
             status, result = app.state.service.approve(
                 approval_id,

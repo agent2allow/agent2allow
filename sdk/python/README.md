@@ -8,6 +8,12 @@ cd sdk/python
 pip install -e .
 ```
 
+## Optional typed OpenAPI sync
+```bash
+python3 ../../scripts/export_openapi.py
+python3 scripts/generate_openapi_types.py
+```
+
 ## Copy-paste usage
 ```python
 from agent2allow_sdk import Agent2AllowClient
@@ -38,6 +44,8 @@ write = client.tool_call(
 
 if write["status"] == "pending_approval":
     client.approve(write["approval_id"], approver="operator", reason="safe change")
+
+client.bulk_approval([1, 2], decision="deny", approver="operator", reason="out of scope")
 ```
 
 `idempotent_replay=True` in a response means the same idempotency key was replayed and the cached result was returned.

@@ -7,6 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from .audit_sink import AuditSinkContract, NoopAuditSink, safe_emit
 from .connectors.contracts import GithubConnectorContract
 from .models import Approval, AuditLog, IdempotencyRecord
 from .policy import PolicyDecision, PolicyEngine
@@ -25,12 +26,14 @@ class Agent2AllowService:
         session_factory: Callable[[], Session],
         policy_engine: PolicyEngine,
         github_client: GithubConnectorContract,
+        audit_sink: AuditSinkContract | None = None,
     ):
         if not isinstance(github_client, GithubConnectorContract):
             raise TypeError("github_client does not satisfy GithubConnectorContract")
         self.session_factory = session_factory
         self.policy_engine = policy_engine
         self.github_client = github_client
+        self.audit_sink = audit_sink or NoopAuditSink()
 
     def _audit(
         self,
@@ -63,6 +66,23 @@ class Agent2AllowService:
         )
         db.add(entry)
         db.commit()
+        safe_emit(
+            self.audit_sink,
+            {
+                "timestamp": entry.timestamp.isoformat(),
+                "agent_id": entry.agent_id,
+                "tool": entry.tool,
+                "action": entry.action,
+                "repo": entry.repo,
+                "risk_level": entry.risk_level,
+                "schema_version": entry.schema_version,
+                "status": entry.status,
+                "request_payload": request_payload,
+                "response_payload": response_payload or {},
+                "approval_id": approval_id,
+                "message": message,
+            },
+        )
 
     def _execute(self, request: ToolCallRequest) -> dict:
         if request.tool != "github":
@@ -286,6 +306,10 @@ class Agent2AllowService:
                 .order_by(Approval.created_at.asc())
             ).all()
             return rows
+
+    def get_approval(self, approval_id: int) -> Approval | None:
+        with self.session_factory() as db:
+            return db.get(Approval, approval_id)
 
     def approve(self, approval_id: int, approver: str, reason: str) -> tuple[str, dict | None]:
         with self.session_factory() as db:

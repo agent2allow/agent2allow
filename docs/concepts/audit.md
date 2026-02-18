@@ -10,6 +10,10 @@ Each tool call emits structured audit events:
 - SQLite table: `audit_logs`
 - Export endpoint: `GET /v1/audit/export` (JSONL)
 - UI includes status/repo/action filters and per-event detail expansion for fast triage
+- Optional external sink adapters:
+  - `AUDIT_SINK=syslog`
+  - `AUDIT_SINK=s3` (requires `boto3`)
+  - `AUDIT_SINK=blob` (requires `azure-storage-blob`)
 
 Audit rows include:
 - timestamp

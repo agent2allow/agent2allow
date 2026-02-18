@@ -2,5 +2,11 @@
   "name": "@agent2allow/sdk-js",
   "version": "0.1.0",
   "type": "module",
-  "main": "client.js"
+  "main": "client.js",
+  "types": "openapi-types.d.ts",
+  "scripts": {
+    "openapi:export": "python3 ../../scripts/export_openapi.py",
+    "openapi:types": "node ./scripts/generate_openapi_types.mjs",
+    "openapi:sync": "python3 ../../scripts/export_openapi.py && node ./scripts/generate_openapi_types.mjs"
+  }
 }

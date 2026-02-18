@@ -73,6 +73,18 @@ python3 gateway/scripts/policy_wizard.py \
   --out ./tmp/policy.yml
 ```
 
+## 9. Diff policy changes before rollout
+```bash
+./agent2allow policy-diff gateway/config/default-policy.yml ./tmp/policy.yml --strict
+```
+
+## 10. Generate SDK OpenAPI types (optional)
+```bash
+python3 scripts/export_openapi.py
+cd sdk/js && npm run openapi:types
+python3 sdk/python/scripts/generate_openapi_types.py
+```
+
 ## Troubleshooting
 - If demo says `Gateway not reachable`, confirm `http://localhost:8000/health`.
 - If ports are busy, stop old containers: `docker compose down`.
@@ -110,6 +122,29 @@ Optional auth for higher rate limits:
 ```bash
 export REAL_GITHUB_TOKEN=ghp_xxx
 ```
+
+## Optional Approval RBAC
+Enable lightweight role checks for approval decisions:
+
+```bash
+export APPROVAL_RBAC_ENABLED=true
+export APPROVAL_ROLE_BINDINGS='{"alice":"reviewer","bob":"admin"}'
+export APPROVAL_ROLES_FOR_APPROVE=reviewer,admin
+export APPROVAL_ROLES_FOR_HIGH_RISK_APPROVE=admin
+```
+
+## Optional External Audit Sink
+Forward every audit event to an external sink:
+
+```bash
+# syslog
+export AUDIT_SINK=syslog
+export AUDIT_SINK_SYSLOG_HOST=localhost
+export AUDIT_SINK_SYSLOG_PORT=514
+export AUDIT_SINK_SYSLOG_FACILITY=user
+```
+
+For cloud sinks set `AUDIT_SINK=s3` or `AUDIT_SINK=blob` and provide the matching bucket/container env vars.
 
 Manual GitHub workflow alternative:
 - Configure repo secret `REAL_GITHUB_TOKEN`.

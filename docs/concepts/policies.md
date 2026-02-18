@@ -57,3 +57,14 @@ python3 gateway/scripts/policy_wizard.py \
 Available templates:
 - `triage-readonly`: only `issues.list`
 - `triage-standard`: `issues.list` + label/comment writes
+
+## Policy diff/check
+Compare two policy versions before rollout:
+
+```bash
+python3 gateway/scripts/policy_diff.py old-policy.yml new-policy.yml
+python3 gateway/scripts/policy_diff.py old-policy.yml new-policy.yml --strict
+```
+
+- `--strict` exits non-zero when any effective policy change is detected.
+- `--json` emits machine-readable diff payload.

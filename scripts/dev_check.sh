@@ -16,7 +16,7 @@ echo "[3/4] UI lint + tests"
 (
   cd ui
   npm run lint
-  npm test --silent
+  npm test --silent -- --pool=threads --maxWorkers=1
 )
 
 echo "[4/4] Compose config"

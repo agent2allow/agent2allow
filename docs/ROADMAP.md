@@ -17,9 +17,13 @@
 14. Release hygiene docs (`CHANGELOG.md`, release guide).
 15. Security operations docs (threat model + incident response).
 16. Manual real-mode safety GitHub workflow.
+17. Optional OpenAPI schema export + typed SDK generation scripts.
+18. Lightweight RBAC checks for approval decisions.
+19. External audit sink adapter framework (`syslog`, `s3`, `blob`).
+20. Policy diff/check command for policy change reviews.
 
 ## Next
-1. Optional typed OpenAPI client generation for SDKs.
-2. Add lightweight RBAC for approval actions.
-3. Add persistent external audit sink (S3/Blob/syslog) adapter.
-4. Add policy diff/check command for change reviews.
+1. Add API key auth for approval endpoints (for RBAC identity hardening).
+2. Add signed audit event envelopes for external sink tamper evidence.
+3. Add policy drift detection in CI against production baseline.
+4. Add a small SDK release pipeline (`npm publish` / PyPI publish).

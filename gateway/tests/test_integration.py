@@ -1,6 +1,9 @@
 import respx
 from httpx import Response
 
+from src.models import Approval
+from src.rbac import ApprovalRBAC
+
 
 def test_health_and_ready(client):
     health = client.get("/health")
@@ -216,3 +219,77 @@ def test_bulk_approval_endpoint_executes_multiple_pending(client):
     assert {row["status"] for row in payload["results"]} == {"executed"}
     assert route_issue_1.called
     assert route_issue_2.called
+
+
+@respx.mock
+def test_approval_rbac_blocks_unmapped_approver(client):
+    client.app.state.approval_rbac = ApprovalRBAC(
+        enabled=True,
+        role_bindings_json='{"bob":"admin"}',
+        approve_roles_csv="reviewer,admin",
+        deny_roles_csv="reviewer,admin",
+        high_risk_approve_roles_csv="admin",
+    )
+    respx.post("https://api.github.test/repos/acme/roadrunner/issues/1/labels").mock(
+        return_value=Response(200, json=["bug"])
+    )
+    write = client.post(
+        "/v1/tool-calls",
+        json={
+            "agent_id": "triage-agent",
+            "tool": "github",
+            "action": "issues.set_labels",
+            "repo": "acme/roadrunner",
+            "params": {"issue_number": 1, "labels": ["bug"]},
+        },
+    )
+    approval_id = write.json()["approval_id"]
+    blocked = client.post(
+        f"/v1/approvals/{approval_id}/approve",
+        json={"approver": "alice", "reason": "looks good"},
+    )
+    assert blocked.status_code == 403
+    assert "no mapped RBAC role" in blocked.text
+
+
+@respx.mock
+def test_approval_rbac_requires_admin_for_high_risk(client):
+    client.app.state.approval_rbac = ApprovalRBAC(
+        enabled=True,
+        role_bindings_json='{"alice":"reviewer","bob":"admin"}',
+        approve_roles_csv="reviewer,admin",
+        deny_roles_csv="reviewer,admin",
+        high_risk_approve_roles_csv="admin",
+    )
+    respx.post("https://api.github.test/repos/acme/roadrunner/issues/1/labels").mock(
+        return_value=Response(200, json=["bug"])
+    )
+    write = client.post(
+        "/v1/tool-calls",
+        json={
+            "agent_id": "triage-agent",
+            "tool": "github",
+            "action": "issues.set_labels",
+            "repo": "acme/roadrunner",
+            "params": {"issue_number": 1, "labels": ["bug"]},
+        },
+    )
+    approval_id = write.json()["approval_id"]
+    with client.app.state.service.session_factory() as db:
+        approval = db.get(Approval, approval_id)
+        assert approval is not None
+        approval.risk_level = "high"
+        db.commit()
+
+    denied = client.post(
+        f"/v1/approvals/{approval_id}/approve",
+        json={"approver": "alice", "reason": "reviewed"},
+    )
+    assert denied.status_code == 403
+
+    approved = client.post(
+        f"/v1/approvals/{approval_id}/approve",
+        json={"approver": "bob", "reason": "approved"},
+    )
+    assert approved.status_code == 200
+    assert approved.json()["status"] == "executed"

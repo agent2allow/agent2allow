@@ -8,6 +8,13 @@ cd sdk/js
 npm install
 ```
 
+## Optional typed OpenAPI sync
+```bash
+npm run openapi:sync
+```
+
+This exports the gateway OpenAPI schema and regenerates `openapi-types.d.ts`.
+
 ## Copy-paste usage
 ```js
 import { Agent2AllowClient } from "./client.js";
@@ -39,6 +46,8 @@ const write = await client.toolCall(
 if (write.status === "pending_approval") {
   await client.approve(write.approval_id, "operator", "safe change");
 }
+
+await client.bulkApproval([1, 2], "deny", "operator", "out of scope");
 ```
 
 `idempotent_replay=true` in a response means the same idempotency key was replayed and the cached result was returned.

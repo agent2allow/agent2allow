@@ -487,3 +487,67 @@ Close the remaining product-readiness gaps: release hygiene, security operations
 
 ### Rollback plan
 - Revert workflow and doctor flags; keep baseline CI and diagnostics intact.
+
+---
+
+## Iteration 12 (2026-02-18): SDK Typing + Approval RBAC + External Audit Sink + Policy Diff
+
+### Goal
+Close the next roadmap set by improving SDK ergonomics, approval governance, audit extensibility, and policy change review safety.
+
+### Scope
+- Quick Win: add policy diff/check command and wire it through `./agent2allow`.
+- Moat Builder:
+  - optional OpenAPI export + typed SDK generation
+  - lightweight approval RBAC checks
+  - external audit sink adapters for syslog/S3/blob
+
+### Non-goals
+- No full IAM/authentication system.
+- No guaranteed exactly-once delivery semantics for external sinks.
+- No automatic SDK publish automation.
+
+### Files to change
+- `scripts/export_openapi.py`
+- `sdk/openapi/agent2allow.openapi.json`
+- `sdk/js/scripts/generate_openapi_types.mjs`
+- `sdk/js/openapi-types.d.ts`
+- `sdk/js/client.js`
+- `sdk/js/package.json`
+- `sdk/js/README.md`
+- `sdk/python/scripts/generate_openapi_types.py`
+- `sdk/python/agent2allow_sdk/openapi_types.py`
+- `sdk/python/agent2allow_sdk/client.py`
+- `sdk/python/README.md`
+- `gateway/src/settings.py`
+- `gateway/src/main.py`
+- `gateway/src/service.py`
+- `gateway/src/rbac.py`
+- `gateway/src/audit_sink.py`
+- `gateway/scripts/policy_diff.py`
+- `gateway/tests/test_rbac.py`
+- `gateway/tests/test_audit_sink.py`
+- `gateway/tests/test_policy_diff.py`
+- `gateway/tests/test_integration.py`
+- `agent2allow`
+- `docs/quickstart.md`
+- `docs/concepts/approvals.md`
+- `docs/concepts/audit.md`
+- `docs/concepts/policies.md`
+- `docs/ROADMAP.md`
+- `CHANGELOG.md`
+- `docs/TEST_REPORTS/2026-02-18-iteration12.md`
+- `docs/PR_DRAFTS/2026-02-18-iteration12.md`
+
+### Risks and mitigations
+- Risk: RBAC env misconfiguration can block all approvals.
+  - Mitigation: RBAC remains opt-in (`APPROVAL_RBAC_ENABLED=false` by default).
+- Risk: external sink dependency/config mismatch causes runtime errors.
+  - Mitigation: sink selection is explicit; missing required dependency fails fast only for chosen sink type.
+- Risk: generated SDK types drift from API changes.
+  - Mitigation: provide one-command OpenAPI export + regeneration workflow.
+
+### Rollback plan
+- Disable RBAC by unsetting `APPROVAL_RBAC_ENABLED`.
+- Set `AUDIT_SINK=none` to disable external sink routing.
+- Remove generated OpenAPI typing artifacts and keep untyped SDK usage.
