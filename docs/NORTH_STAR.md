@@ -47,3 +47,7 @@
 ## Iteration Selection (2026-02-18, iteration 5)
 - Quick Win: Approval UI bulk actions and clearer status labels.
 - Moat Builder: Audit event schema versioning with backward-safe SQLite migration.
+
+## Iteration Selection (2026-02-18, iteration 6)
+- Quick Win: Expanded connector authoring guide with copy-paste skeleton.
+- Moat Builder: Connector contract checks for required client capabilities.

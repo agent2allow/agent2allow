@@ -273,3 +273,37 @@ Speed up operator approval handling and make audit payloads explicitly versioned
 
 ### Rollback plan
 - Remove bulk controls from UI and stop emitting `schema_version` in responses.
+
+---
+
+## Iteration 6 (2026-02-18): Connector Authoring Guide + Contract Checks
+
+### Goal
+Make connector contributions faster and safer with explicit implementation guidance and contract verification.
+
+### Scope
+- Quick Win: strengthen connector docs and add a connector skeleton template.
+- Moat Builder: define runtime-checkable connector contract and tests for GitHub connector compliance.
+
+### Non-goals
+- No connector plugin loader.
+- No new production connector in this iteration.
+
+### Files to change
+- `docs/concepts/connectors.md`
+- `docs/quickstart.md`
+- `connectors/template/README.md`
+- `gateway/src/connectors/contracts.py`
+- `gateway/src/service.py`
+- `gateway/tests/test_connector_contract.py`
+- `docs/TEST_REPORTS/2026-02-18-iteration6.md`
+- `docs/PR_DRAFTS/2026-02-18-iteration6.md`
+
+### Risks and mitigations
+- Risk: runtime protocol checks may be too generic.
+  - Mitigation: keep explicit required method list and action mapping expectations in docs.
+- Risk: docs/template drift from actual service behavior.
+  - Mitigation: align template with `service._execute` action names and contract tests.
+
+### Rollback plan
+- Remove contract checks and keep docs-only guidance.
