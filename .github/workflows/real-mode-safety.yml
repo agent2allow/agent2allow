@@ -16,12 +16,6 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
-      - name: Validate required secret
-        run: |
-          if [ -z "${{ secrets.REAL_GITHUB_TOKEN }}" ]; then
-            echo "Missing repository secret: REAL_GITHUB_TOKEN"
-            exit 1
-          fi
       - name: Install gateway dependencies
         run: |
           cd gateway

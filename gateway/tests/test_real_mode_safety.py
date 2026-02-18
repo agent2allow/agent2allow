@@ -8,18 +8,17 @@ from src.policy import PolicyEngine
 
 REQUIRES_REAL_MODE = not (
     os.getenv("REAL_GITHUB_ENABLE_TESTS", "").lower() == "true"
-    and os.getenv("REAL_GITHUB_TOKEN")
     and os.getenv("REAL_GITHUB_REPO")
 )
 
 pytestmark = pytest.mark.skipif(
     REQUIRES_REAL_MODE,
-    reason="set REAL_GITHUB_ENABLE_TESTS=true + REAL_GITHUB_TOKEN + REAL_GITHUB_REPO",
+    reason="set REAL_GITHUB_ENABLE_TESTS=true + REAL_GITHUB_REPO",
 )
 
 
 def test_real_mode_read_only_issue_list_call():
-    token = os.environ["REAL_GITHUB_TOKEN"]
+    token = os.getenv("REAL_GITHUB_TOKEN")
     repo = os.environ["REAL_GITHUB_REPO"]
     client = GithubClient(
         "https://api.github.com",

@@ -103,9 +103,12 @@ npm run demo
 Optional real-mode safety tests (non-destructive, skipped by default):
 ```bash
 export REAL_GITHUB_ENABLE_TESTS=true
-export REAL_GITHUB_TOKEN=ghp_xxx
 export REAL_GITHUB_REPO=owner/repo
 cd gateway && pytest -q tests/test_real_mode_safety.py
+```
+Optional auth for higher rate limits:
+```bash
+export REAL_GITHUB_TOKEN=ghp_xxx
 ```
 
 Manual GitHub workflow alternative:
