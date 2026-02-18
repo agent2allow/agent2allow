@@ -12,6 +12,7 @@ async function fetchJson(path, options) {
 
 export function App() {
   const [approvals, setApprovals] = useState([]);
+  const [selectedApprovalIds, setSelectedApprovalIds] = useState([]);
   const [audit, setAudit] = useState([]);
   const [statusFilter, setStatusFilter] = useState("all");
   const [query, setQuery] = useState("");
@@ -26,6 +27,9 @@ export function App() {
         fetchJson("/v1/audit")
       ]);
       setApprovals(pending);
+      setSelectedApprovalIds((previous) =>
+        previous.filter((id) => pending.some((item) => item.id === id))
+      );
       setAudit(logs);
     } catch (err) {
       setError(err.message);
@@ -42,6 +46,17 @@ export function App() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ approver: "ui-operator", reason: `ui ${decision}` })
     });
+    await load();
+  };
+
+  const decideMany = async (decision) => {
+    for (const id of selectedApprovalIds) {
+      await fetchJson(`/v1/approvals/${id}/${decision}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ approver: "ui-operator", reason: `ui bulk ${decision}` })
+      });
+    }
     await load();
   };
 
@@ -64,6 +79,25 @@ export function App() {
       return [...prev, id];
     });
   };
+
+  const toggleSelectedApproval = (id) => {
+    setSelectedApprovalIds((previous) => {
+      if (previous.includes(id)) {
+        return previous.filter((item) => item !== id);
+      }
+      return [...previous, id];
+    });
+  };
+
+  const toggleSelectAllApprovals = () => {
+    if (selectedApprovalIds.length === approvals.length) {
+      setSelectedApprovalIds([]);
+      return;
+    }
+    setSelectedApprovalIds(approvals.map((item) => item.id));
+  };
+
+  const statusClassName = (status) => `status-chip ${status.replaceAll("_", "-")}`;
 
   const filteredAudit = audit.filter((entry) => {
     const statusMatches = statusFilter === "all" || entry.status === statusFilter;
@@ -97,15 +131,47 @@ export function App() {
       <section>
         <header className="section-header">
           <h2>Pending Approvals</h2>
-          <button onClick={load}>Refresh</button>
+          <div className="actions">
+            <button onClick={load}>Refresh</button>
+            <button
+              onClick={() => decideMany("approve")}
+              disabled={selectedApprovalIds.length === 0}
+            >
+              Approve selected
+            </button>
+            <button
+              className="deny"
+              onClick={() => decideMany("deny")}
+              disabled={selectedApprovalIds.length === 0}
+            >
+              Deny selected
+            </button>
+          </div>
         </header>
 
         {approvals.length === 0 ? (
           <p>No pending approvals.</p>
         ) : (
-          <ul className="card-list">
+          <>
+            <label className="select-all">
+              <input
+                type="checkbox"
+                checked={selectedApprovalIds.length === approvals.length}
+                onChange={toggleSelectAllApprovals}
+              />
+              Select all pending approvals
+            </label>
+            <ul className="card-list">
             {approvals.map((item) => (
               <li key={item.id} className="card">
+                <label className="select-item">
+                  <input
+                    type="checkbox"
+                    checked={selectedApprovalIds.includes(item.id)}
+                    onChange={() => toggleSelectedApproval(item.id)}
+                  />
+                  Select
+                </label>
                 <p>
                   <strong>{item.action}</strong> on <code>{item.repo}</code>
                 </p>
@@ -116,7 +182,8 @@ export function App() {
                 </div>
               </li>
             ))}
-          </ul>
+            </ul>
+          </>
         )}
       </section>
 
@@ -159,7 +226,9 @@ export function App() {
                 <React.Fragment key={entry.id}>
                   <tr>
                     <td>{new Date(entry.timestamp).toLocaleString()}</td>
-                    <td>{entry.status}</td>
+                    <td>
+                      <span className={statusClassName(entry.status)}>{entry.status}</span>
+                    </td>
                     <td>{entry.action}</td>
                     <td>{entry.repo}</td>
                     <td>{entry.agent_id}</td>
@@ -176,6 +245,7 @@ export function App() {
 {JSON.stringify(
   {
     id: entry.id,
+    schema_version: entry.schema_version,
     risk_level: entry.risk_level,
     message: entry.message,
     approval_id: entry.approval_id,

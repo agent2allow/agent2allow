@@ -5,7 +5,7 @@ from pathlib import Path
 from fastapi import FastAPI, Header, HTTPException
 
 from .connectors.github_client import GithubClient
-from .db import SessionLocal, engine
+from .db import SessionLocal, engine, run_startup_migrations
 from .models import Base
 from .policy import PolicyEngine
 from .schemas import (
@@ -39,6 +39,7 @@ def build_service() -> Agent2AllowService:
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     Base.metadata.create_all(bind=engine)
+    run_startup_migrations()
     app.state.service = build_service()
     yield
 
@@ -125,6 +126,7 @@ def audit_logs() -> list[AuditLogView]:
             action=row.action,
             repo=row.repo,
             risk_level=row.risk_level,
+            schema_version=row.schema_version,
             status=row.status,
             request_payload=json.loads(row.request_payload),
             response_payload=json.loads(row.response_payload),
@@ -148,6 +150,7 @@ def audit_export() -> dict:
             "action": row.action,
             "repo": row.repo,
             "risk_level": row.risk_level,
+            "schema_version": row.schema_version,
             "status": row.status,
             "request_payload": json.loads(row.request_payload),
             "response_payload": json.loads(row.response_payload),

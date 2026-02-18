@@ -40,6 +40,7 @@ class AuditLog(Base):
     action: Mapped[str] = mapped_column(String(128))
     repo: Mapped[str] = mapped_column(String(256))
     risk_level: Mapped[str] = mapped_column(String(16))
+    schema_version: Mapped[int] = mapped_column(Integer, default=1)
     status: Mapped[str] = mapped_column(String(64), index=True)
     request_payload: Mapped[str] = mapped_column(Text)
     response_payload: Mapped[str] = mapped_column(Text, default="{}")

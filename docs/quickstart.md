@@ -24,6 +24,9 @@ Expected behavior:
 
 ## 3. Open UI
 - http://localhost:5173
+- Use bulk approval actions from "Pending Approvals":
+  - select one or more items
+  - `Approve selected` or `Deny selected`
 
 ## 4. Run deterministic smoke check
 ```bash
@@ -57,6 +60,7 @@ Expected behavior:
 4. If action risk is `medium` or `high`, expect `pending_approval` instead of immediate execution.
 5. Open UI (`http://localhost:5173`) and approve/deny from Pending Approvals.
 6. Validate final state in audit log UI or export JSONL and inspect `decision` and `error` fields.
+7. For parser compatibility, rely on audit `schema_version` (currently `1`) in API and export payloads.
 
 ## Optional Real GitHub Mode
 ```bash

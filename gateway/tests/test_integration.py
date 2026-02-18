@@ -77,10 +77,18 @@ def test_approve_executes_pending_action(client):
     assert approved.json()["status"] == "executed"
 
     audit = client.get("/v1/audit")
+    assert audit.status_code == 200
+    assert all(entry["schema_version"] == 1 for entry in audit.json())
     statuses = [row["status"] for row in audit.json()]
     assert "pending_approval" in statuses
     assert "approved" in statuses
     assert "executed" in statuses
+
+    exported = client.get("/v1/audit/export")
+    assert exported.status_code == 200
+    lines = exported.json()["lines"]
+    assert lines
+    assert all('"schema_version": 1' in line for line in lines)
 
 
 @respx.mock

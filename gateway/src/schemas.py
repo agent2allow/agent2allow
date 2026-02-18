@@ -47,6 +47,7 @@ class AuditLogView(BaseModel):
     action: str
     repo: str
     risk_level: str
+    schema_version: int
     status: str
     request_payload: dict[str, Any]
     response_payload: dict[str, Any]

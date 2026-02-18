@@ -18,6 +18,8 @@ class IdempotencyConflictError(ValueError):
 
 
 class Agent2AllowService:
+    audit_schema_version = 1
+
     def __init__(
         self,
         session_factory: Callable[[], Session],
@@ -50,6 +52,7 @@ class Agent2AllowService:
             action=action,
             repo=repo,
             risk_level=risk_level,
+            schema_version=self.audit_schema_version,
             status=status,
             request_payload=json.dumps(request_payload),
             response_payload=json.dumps(response_payload or {}),
