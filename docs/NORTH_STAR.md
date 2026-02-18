@@ -43,3 +43,7 @@
 ## Iteration Selection (2026-02-18, iteration 4)
 - Quick Win: #4 One-command local dev check helper script.
 - Moat Builder: #8 Policy schema validation command and CI integration.
+
+## Iteration Selection (2026-02-18, iteration 5)
+- Quick Win: Approval UI bulk actions and clearer status labels.
+- Moat Builder: Audit event schema versioning with backward-safe SQLite migration.
