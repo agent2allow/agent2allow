@@ -43,3 +43,17 @@ python3 gateway/scripts/validate_policy.py examples/github-triage-agent/sample-p
 ```
 
 Validation guarantees the MVP schema and blocks dangerous overrides like disabling approval on allowed `medium`/`high` risk actions.
+
+## Policy wizard scaffold
+Generate starter templates for common triage flows:
+
+```bash
+python3 gateway/scripts/policy_wizard.py \
+  --template triage-standard \
+  --repo acme/roadrunner \
+  --out ./tmp/policy.yml
+```
+
+Available templates:
+- `triage-readonly`: only `issues.list`
+- `triage-standard`: `issues.list` + label/comment writes

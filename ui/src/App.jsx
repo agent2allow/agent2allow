@@ -11,8 +11,23 @@ async function fetchJson(path, options) {
 }
 
 export function App() {
+  const reasonPresets = {
+    approve: [
+      "safe: policy-compliant write",
+      "safe: low impact triage update",
+      "safe: reviewed by operator"
+    ],
+    deny: [
+      "denied: insufficient context",
+      "denied: repo scope mismatch",
+      "denied: requires human investigation"
+    ]
+  };
+
   const [approvals, setApprovals] = useState([]);
   const [selectedApprovalIds, setSelectedApprovalIds] = useState([]);
+  const [approveReasonPreset, setApproveReasonPreset] = useState(reasonPresets.approve[0]);
+  const [denyReasonPreset, setDenyReasonPreset] = useState(reasonPresets.deny[0]);
   const [audit, setAudit] = useState([]);
   const [statusFilter, setStatusFilter] = useState("all");
   const [query, setQuery] = useState("");
@@ -41,15 +56,17 @@ export function App() {
   }, []);
 
   const decide = async (id, decision) => {
+    const reason = decision === "approve" ? approveReasonPreset : denyReasonPreset;
     await fetchJson(`/v1/approvals/${id}/${decision}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ approver: "ui-operator", reason: `ui ${decision}` })
+      body: JSON.stringify({ approver: "ui-operator", reason })
     });
     await load();
   };
 
   const decideMany = async (decision) => {
+    const reason = decision === "approve" ? approveReasonPreset : denyReasonPreset;
     await fetchJson("/v1/approvals/bulk", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -57,7 +74,7 @@ export function App() {
         ids: selectedApprovalIds,
         decision,
         approver: "ui-operator",
-        reason: `ui bulk ${decision}`
+        reason
       })
     });
     await load();
@@ -151,6 +168,34 @@ export function App() {
             </button>
           </div>
         </header>
+        <div className="preset-row">
+          <label>
+            Approve reason
+            <select
+              value={approveReasonPreset}
+              onChange={(event) => setApproveReasonPreset(event.target.value)}
+            >
+              {reasonPresets.approve.map((preset) => (
+                <option key={preset} value={preset}>
+                  {preset}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Deny reason
+            <select
+              value={denyReasonPreset}
+              onChange={(event) => setDenyReasonPreset(event.target.value)}
+            >
+              {reasonPresets.deny.map((preset) => (
+                <option key={preset} value={preset}>
+                  {preset}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
 
         {approvals.length === 0 ? (
           <p>No pending approvals.</p>
