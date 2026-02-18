@@ -234,3 +234,42 @@ Reduce local setup friction and prevent invalid policy files from reaching runti
 
 ### Rollback plan
 - Remove validator script from CI and keep runtime parser behavior unchanged.
+
+---
+
+## Iteration 5 (2026-02-18): Approval UX Bulk Actions + Audit Schema Versioning
+
+### Goal
+Speed up operator approval handling and make audit payloads explicitly versioned for future compatibility.
+
+### Scope
+- Quick Win: bulk approve/deny controls in UI and clearer status labels.
+- Moat Builder: add `schema_version` to audit events and export, with SQLite-safe migration path.
+
+### Non-goals
+- No redesign of approval permissions model.
+- No multi-version audit translation layer.
+
+### Files to change
+- `ui/src/App.jsx`
+- `ui/src/styles.css`
+- `ui/tests/app.test.jsx`
+- `gateway/src/models.py`
+- `gateway/src/db.py`
+- `gateway/src/service.py`
+- `gateway/src/schemas.py`
+- `gateway/src/main.py`
+- `gateway/tests/test_integration.py`
+- `docs/concepts/audit.md`
+- `docs/quickstart.md`
+- `docs/TEST_REPORTS/2026-02-18-iteration5.md`
+- `docs/PR_DRAFTS/2026-02-18-iteration5.md`
+
+### Risks and mitigations
+- Risk: existing SQLite files may miss new audit column.
+  - Mitigation: add startup migration that creates missing column before requests.
+- Risk: bulk UI actions may hide per-item failures.
+  - Mitigation: execute actions sequentially and show first error immediately.
+
+### Rollback plan
+- Remove bulk controls from UI and stop emitting `schema_version` in responses.
