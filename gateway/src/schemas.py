@@ -26,6 +26,13 @@ class ApprovalDecisionRequest(BaseModel):
     reason: str = ""
 
 
+class BulkApprovalRequest(BaseModel):
+    ids: list[int] = Field(min_length=1)
+    decision: str
+    approver: str = "human"
+    reason: str = ""
+
+
 class ApprovalView(BaseModel):
     id: int
     status: str

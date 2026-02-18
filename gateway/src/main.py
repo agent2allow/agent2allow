@@ -12,6 +12,7 @@ from .schemas import (
     ApprovalDecisionRequest,
     ApprovalView,
     AuditLogView,
+    BulkApprovalRequest,
     ToolCallRequest,
     ToolCallResponse,
 )
@@ -112,6 +113,31 @@ def approvals_deny(approval_id: int, request: ApprovalDecisionRequest) -> dict:
     if status == "invalid_state":
         raise HTTPException(status_code=400, detail="approval not pending")
     return {"status": status}
+
+
+@app.post("/v1/approvals/bulk")
+def approvals_bulk(request: BulkApprovalRequest) -> dict:
+    if request.decision not in {"approve", "deny"}:
+        raise HTTPException(status_code=400, detail="decision must be approve or deny")
+
+    results: list[dict] = []
+    for approval_id in request.ids:
+        if request.decision == "approve":
+            status, result = app.state.service.approve(
+                approval_id,
+                request.approver,
+                request.reason,
+            )
+            if status == "not_found":
+                results.append({"id": approval_id, "status": "not_found"})
+            elif status == "invalid_state":
+                results.append({"id": approval_id, "status": "invalid_state"})
+            else:
+                results.append({"id": approval_id, "status": status, "result": result})
+        else:
+            status = app.state.service.deny(approval_id, request.approver, request.reason)
+            results.append({"id": approval_id, "status": status})
+    return {"results": results}
 
 
 @app.get("/v1/audit", response_model=list[AuditLogView])

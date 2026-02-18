@@ -50,13 +50,16 @@ export function App() {
   };
 
   const decideMany = async (decision) => {
-    for (const id of selectedApprovalIds) {
-      await fetchJson(`/v1/approvals/${id}/${decision}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ approver: "ui-operator", reason: `ui bulk ${decision}` })
-      });
-    }
+    await fetchJson("/v1/approvals/bulk", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ids: selectedApprovalIds,
+        decision,
+        approver: "ui-operator",
+        reason: `ui bulk ${decision}`
+      })
+    });
     await load();
   };
 

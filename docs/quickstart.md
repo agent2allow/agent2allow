@@ -65,6 +65,7 @@ Expected behavior:
 5. Open UI (`http://localhost:5173`) and approve/deny from Pending Approvals.
 6. Validate final state in audit log UI or export JSONL and inspect `decision` and `error` fields.
 7. For parser compatibility, rely on audit `schema_version` (currently `1`) in API and export payloads.
+8. For high-volume triage, use bulk approvals (`POST /v1/approvals/bulk`) from UI or API client.
 
 ## Optional Real GitHub Mode
 ```bash
