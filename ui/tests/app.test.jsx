@@ -63,6 +63,8 @@ test("renders approvals and audit sections", async () => {
     expect(screen.getByText("Approve selected")).toBeInTheDocument();
     expect(screen.getByText("Deny selected")).toBeInTheDocument();
     expect(screen.getByText("Select all pending approvals")).toBeInTheDocument();
+    expect(screen.getByText("Approve reason")).toBeInTheDocument();
+    expect(screen.getByText("Deny reason")).toBeInTheDocument();
     expect(screen.getByText("Audit Log")).toBeInTheDocument();
     expect(screen.getByText("Export JSONL")).toBeInTheDocument();
   });

@@ -55,3 +55,7 @@
 ## Iteration Selection (2026-02-18, iteration 7)
 - Quick Win: Roadmap refresh with completed reliability/security milestones.
 - Moat Builder: Bulk approval API endpoint and UI integration.
+
+## Iteration Selection (2026-02-18, iteration 8)
+- Quick Win: Approval reason presets in UI.
+- Moat Builder: Policy wizard CLI scaffold for common templates.
