@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agent2Allow Installer</title>
+  <style>
+    :root {
+      --bg: #f5f1ea;
+      --text: #191625;
+      --muted: #4e4a58;
+      --card: #fff;
+      --line: #d9d4c8;
+      --brand: #365ec8;
+      --brand-2: #2f4f9a;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, Segoe UI, Arial, sans-serif;
+      background:
+        radial-gradient(circle at 20% 0%, #dfe7ff, transparent 38%),
+        linear-gradient(180deg, var(--bg), #ece7dd);
+      color: var(--text);
+      display: grid;
+      place-items: center;
+      padding: 1.25rem;
+    }
+
+    .panel {
+      width: min(720px, 100%);
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 1.2rem;
+      box-shadow: 0 18px 42px rgba(29, 25, 43, 0.1);
+    }
+
+    h1 {
+      margin: 0 0 0.75rem;
+      font-size: 1.55rem;
+      letter-spacing: 0.01em;
+    }
+
+    p {
+      margin: 0 0 0.9rem;
+      color: var(--muted);
+    }
+
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      background: #f2f2f9;
+      border: 1px solid #e4e0f0;
+      border-radius: 8px;
+      padding: 0.12rem 0.35rem;
+    }
+
+    pre {
+      background: #0f1220;
+      color: #ecf2ff;
+      border-radius: 10px;
+      padding: 0.85rem;
+      overflow-x: auto;
+      border: 1px solid #1d2550;
+      margin: 0;
+    }
+
+    .actions {
+      display: grid;
+      gap: 0.65rem;
+      margin-top: 1rem;
+    }
+
+    .btn {
+      text-decoration: none;
+      border-radius: 9px;
+      border: 1px solid var(--brand);
+      background: var(--brand);
+      color: #fff;
+      display: inline-block;
+      padding: 0.5rem 0.85rem;
+      font-weight: 700;
+      width: fit-content;
+    }
+
+    .btn:hover {
+      background: var(--brand-2);
+      border-color: var(--brand-2);
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 0.94rem;
+    }
+  </style>
+</head>
+<body>
+  <main class="panel">
+    <h1>Agent2Allow Installer</h1>
+    <p>
+      Use this endpoint for a stable one-liner installer. Keep this page open in a browser for a quick copy-paste command.
+    </p>
+    <p class="muted">
+      Canonical bootstrap:
+      <code>curl -fsSL https://get.agent2allow.com/install.sh | bash -s -- --with-demo</code>
+    </p>
+    <div class="actions">
+      <a class="btn" href="install.sh">Run installer script</a>
+      <a class="btn" href="/install.sh" target="_blank" rel="noreferrer">Open install.sh directly</a>
+    </div>
+    <h2>Fallback</h2>
+    <pre>curl -fsSL https://raw.githubusercontent.com/agent2allow/agent2allow/main/scripts/install.sh | bash -s -- --with-demo</pre>
+  </main>
+</body>
+</html>
