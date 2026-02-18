@@ -27,7 +27,7 @@ jobs:
           cp scripts/install.sh installer-site/install.sh
           echo "get.agent2allow.com" > installer-site/CNAME
           chmod +x installer-site/install.sh
-      - uses: actions/configure-pages@v6
+      - uses: actions/configure-pages@v5
       - name: Upload installer artifact
         uses: actions/upload-pages-artifact@v3
         with:
